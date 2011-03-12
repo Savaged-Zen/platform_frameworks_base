@@ -276,12 +276,20 @@
     <string name="screen_lock">Screen lock</string>
     <!-- Button to turn off the phone, within the Phone Options dialog -->
     <string name="power_off">Power off</string>
+    <!-- Button to reboot the phone, within the Phone Options dialog -->
+    <string name="reboot_system">Reboot phone</string>
 
     <!-- Shutdown Progress Dialog. This is shown if the user chooses to power off the phone. -->
     <string name="shutdown_progress">Shutting down\u2026</string>
 
+    <!-- Reboot Progress Dialog. This is shown if the user chooses to reboot the phone. -->
+    <string name="reboot_progress">Rebooting\u2026</string>
+
     <!-- Shutdown Confirmation Dialog.  When the user chooses to power off the phone, there will be a confirmation dialog.  This is the message. -->
     <string name="shutdown_confirm">Your phone will shut down.</string>
+
+    <!-- Reboot Confirmation Dialog.  When the user chooses to reboot the phone, there will be a confirmation dialog.  This is the message. -->
+    <string name="reboot_confirm">Your phone will reboot.</string>
 
     <!-- Recent Tasks dialog: title -->
     <string name="recent_tasks_title">Recent</string>
@@ -297,6 +305,8 @@
     <!-- label for item that turns off power in phone options dialog -->
     <string name="global_action_power_off">Power off</string>
 
+    <!-- label for item that reboots the phone in phone options dialog -->
+    <string name="global_action_reboot">Reboot</string>
     <!-- label for item that enables silent mode in phone options dialog -->
     <string name="global_action_toggle_silent_mode">Silent mode</string>
 
@@ -1139,6 +1149,18 @@
       than the non-multicast mode.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_accessWimaxState">view WiMax state</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_accessWimaxState">Allows an application to view
+      the information about the state of WiMax.</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_changeWimaxState">change WiMax state</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_changeWimaxState">Allows an application to connect
+      to and disconnect from WiMax Networks.</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_bluetoothAdmin">bluetooth administration</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permdesc_bluetoothAdmin">Allows an application to configure
@@ -1458,8 +1480,10 @@
        *** touch based lock / unlock ***
                                           --> <skip />
 
+    
+
     <!-- On the keyguard screen, it shows the carrier the phone is connected to.  This is displayed if the phone is not connected to a carrier.-->
-    <string name="lockscreen_carrier_default">(No service)</string>
+    <string name="lockscreen_carrier_default">Evervolv</string>
 
     <!-- Shown in the lock screen to tell the user that the screen is locked. -->
     <string name="lockscreen_screen_locked">Screen locked.</string>
@@ -2285,6 +2309,7 @@
     <string name="l2tp_vpn_description">Layer 2 Tunneling Protocol</string>
     <string name="l2tp_ipsec_psk_vpn_description">Pre-shared key based L2TP/IPSec VPN</string>
     <string name="l2tp_ipsec_crt_vpn_description">Certificate based L2TP/IPSec VPN</string>
+    <string name="openvpn_vpn_description">OpenVPN SSL VPN</string>
 
     <!-- Localized strings for WebView -->
     <!-- Label for button in a WebView that will open a chooser to choose a file to upload -->
