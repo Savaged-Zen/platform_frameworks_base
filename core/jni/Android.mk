@@ -142,7 +142,12 @@ LOCAL_SRC_FILES:= \
 	android_content_res_ObbScanner.cpp \
     android_content_res_Configuration.cpp
 
-LOCAL_C_INCLUDES += \
+ifeq ($(BOARD_HAVE_SQN_WIMAX),true)
+  LOCAL_SRC_FILES += android_net_wimax_WimaxCommonAPI.cpp
+  LOCAL_CFLAGS += -DBOARD_HAVE_SQN_WIMAX
+endif
+
++LOCAL_C_INCLUDES += \
 	$(JNI_H_INCLUDE) \
 	$(LOCAL_PATH)/android/graphics \
 	$(call include-path-for, bluedroid) \
