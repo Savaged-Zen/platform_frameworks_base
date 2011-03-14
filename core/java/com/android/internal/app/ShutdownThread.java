@@ -121,7 +121,12 @@ public final class ShutdownThread extends Thread {
                                 beginShutdownSequence(context);
                             }
                         })
-                        .setNegativeButton(com.android.internal.R.string.no, null)
+                        .setNegativeButton(com.android.internal.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                mReboot = false;
+                                dialog.cancel();
+                            }
+                        })
                         .create();
             } else {
                 dialog = new AlertDialog.Builder(context)
@@ -142,7 +147,6 @@ public final class ShutdownThread extends Thread {
                 dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             }
             dialog.show();
-           mReboot = false;
         } else {
             beginShutdownSequence(context);
         }
