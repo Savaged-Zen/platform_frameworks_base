@@ -147,7 +147,7 @@ ifeq ($(BOARD_HAVE_SQN_WIMAX),true)
   LOCAL_CFLAGS += -DBOARD_HAVE_SQN_WIMAX
 endif
 
-+LOCAL_C_INCLUDES += \
+LOCAL_C_INCLUDES += \
 	$(JNI_H_INCLUDE) \
 	$(LOCAL_PATH)/android/graphics \
 	$(call include-path-for, bluedroid) \
