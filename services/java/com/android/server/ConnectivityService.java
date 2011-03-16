@@ -537,10 +537,20 @@ public class ConnectivityService extends IConnectivityManager.Stub {
         return null;
     }
 
-    public NetworkInfo getNetworkInfo(int networkType) {
+    /**
+     * Return NetworkInfo for the active (i.e., connected) network interface.
+     * It is assumed that at most one network is active at a time. If more
+     * than one is active, it is indeterminate which will be returned.
+     * @return the info for the active network, or {@code null} if none is
+     * active
+     */
+    public NetworkInfo getActiveNetworkInfo() {
         enforceAccessPermission();
-        if (ConnectivityManager.isNetworkTypeValid(networkType)) {
-            NetworkStateTracker t = mNetTrackers[networkType];
+        for (int type=0; type <= ConnectivityManager.MAX_NETWORK_TYPE; type++) {
+            if (mNetAttributes[type] == null || !mNetAttributes[type].isDefault()) {
+                continue;
+            }
+            NetworkStateTracker t = mNetTrackers[type];
             if (t != null) {
                 NetworkInfo info = t.getNetworkInfo();
                 if (info.isConnected()) {
@@ -550,10 +560,10 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                     return info;
                 }
             } else {
-                Slog.e(TAG, "Unable to get NetworkStateTracker for type=" + type);        
-	}  
-   }
-  return null;
+                Slog.e(TAG, "Unable to get NetworkStateTracker for type=" + type);
+            }
+        }
+        return null;
     }
 
     public NetworkInfo[] getAllNetworkInfo() {

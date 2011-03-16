@@ -1229,11 +1229,9 @@ public class StatusBarPolicy {
             mService.setIcon("wimax", iconId, 0);
         } else if (action.equals(WimaxConstants.RSSI_CHANGED_ACTION)) {
 
-           int rssi = intent.getIntExtra(WimaxConstants.EXTRA_NEW_RSSI_LEVEL, -200);
-		int newSignalLevel = mWimaxSettingsHelper.calculateSignalLevel(rssi, 4);
+            int rssi = intent.getIntExtra(WimaxConstants.EXTRA_NEW_RSSI_LEVEL, -200);
+            int newSignalLevel = mWimaxSettingsHelper.calculateSignalLevel(rssi, 4);
 		
-
-            int newSignalLevel = intent.getIntExtra(WimaxConstants.EXTRA_NEW_RSSI_LEVEL, -200);
             int iconId;
 
             if (newSignalLevel > 3) {
