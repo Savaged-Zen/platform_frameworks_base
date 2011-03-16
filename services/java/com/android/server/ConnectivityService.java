@@ -526,31 +526,6 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                 continue;
             }
             NetworkStateTracker t = mNetTrackers[type];
-            NetworkInfo info = t.getNetworkInfo();
-            if (info.isConnected()) {
-                if (DBG && type != mActiveDefaultNetwork) Slog.e(TAG,
-                        "connected default network is not " +
-                        "mActiveDefaultNetwork!");
-                return info;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Return NetworkInfo for the active (i.e., connected) network interface.
-     * It is assumed that at most one network is active at a time. If more
-     * than one is active, it is indeterminate which will be returned.
-     * @return the info for the active network, or {@code null} if none is
-     * active
-     */
-    public NetworkInfo getActiveNetworkInfo() {
-        enforceAccessPermission();
-        for (int type=0; type <= ConnectivityManager.MAX_NETWORK_TYPE; type++) {
-            if (mNetAttributes[type] == null || !mNetAttributes[type].isDefault()) {
-                continue;
-            }
-            NetworkStateTracker t = mNetTrackers[type];
             if (t != null) {
                 NetworkInfo info = t.getNetworkInfo();
                 if (info.isConnected()) {
@@ -562,6 +537,17 @@ public class ConnectivityService extends IConnectivityManager.Stub {
             } else {
                 Slog.e(TAG, "Unable to get NetworkStateTracker for type=" + type);
             }
+        }
+        return null;
+    }
+
+    public NetworkInfo getNetworkInfo(int networkType) {
+        enforceAccessPermission();
+
+        if (ConnectivityManager.isNetworkTypeValid(networkType)) {
+            NetworkStateTracker t = mNetTrackers[networkType];
+            if (t != null)
+                return t.getNetworkInfo();
         }
         return null;
     }
