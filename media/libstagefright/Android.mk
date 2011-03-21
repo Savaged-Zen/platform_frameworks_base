@@ -48,7 +48,6 @@ LOCAL_C_INCLUDES:= \
 	$(JNI_H_INCLUDE) \
         $(TOP)/frameworks/base/include/media/stagefright/openmax \
         $(TOP)/external/tremolo \
-        $(TOP)/external/flac/include \
         $(TOP)/frameworks/base/media/libstagefright/rtsp
 
 LOCAL_SHARED_LIBRARIES := \
@@ -60,8 +59,7 @@ LOCAL_SHARED_LIBRARIES := \
         libsonivox        \
         libvorbisidec     \
         libsurfaceflinger_client \
-        libcamera_client  \
-        libFLAC
+        libcamera_client
 
 LOCAL_STATIC_LIBRARIES := \
         libstagefright_aacdec \
@@ -100,19 +98,6 @@ endif
 
 ifneq ($(TARGET_SIMULATOR),true)
 LOCAL_SHARED_LIBRARIES += libdl
-endif
-
-ifneq ($(filter qsd8k msm7k msm7625 msm7x30, $(TARGET_BOARD_PLATFORM)),)
-        LOCAL_CFLAGS += -DUSE_QCOM_OMX_FIX
-endif
-
-ifeq ($(BOARD_USE_YUV422I_DEFAULT_COLORFORMAT),true)
-	LOCAL_CFLAGS += -DUSE_YUV422I_DEFAULT_COLORFORMAT
-endif
-
-ifeq ($(BOARD_CAMERA_USE_GETBUFFERINFO),true)
-        LOCAL_CFLAGS += -DUSE_GETBUFFERINFO
-        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/media/mm-core/omxcore/inc
 endif
 
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)

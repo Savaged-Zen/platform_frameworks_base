@@ -55,7 +55,6 @@ private:
 
     OMXNodeInstance *mOwner;
     bool mDone;
-    bool mStarted;
     Condition mQueueChanged;
     List<omx_message> mQueue;
 
@@ -72,8 +71,7 @@ private:
 
 OMX::CallbackDispatcher::CallbackDispatcher(OMXNodeInstance *owner)
     : mOwner(owner),
-      mDone(false),
-      mStarted(false) {
+      mDone(false) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -100,9 +98,6 @@ OMX::CallbackDispatcher::~CallbackDispatcher() {
 
 void OMX::CallbackDispatcher::post(const omx_message &msg) {
     Mutex::Autolock autoLock(mLock);
-    while (!mStarted) {
-        mQueueChanged.wait(mLock);
-    }
 
     mQueue.push_back(msg);
     mQueueChanged.signal();
@@ -127,12 +122,6 @@ void OMX::CallbackDispatcher::threadEntry() {
     setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_AUDIO);
     prctl(PR_SET_NAME, (unsigned long)"OMXCallbackDisp", 0, 0, 0);
 
-    {
-        Mutex::Autolock autoLock(mLock);
-        mStarted = true;
-        mQueueChanged.signal();
-    }
-
     for (;;) {
         omx_message msg;
 
@@ -142,7 +131,7 @@ void OMX::CallbackDispatcher::threadEntry() {
                 mQueueChanged.wait(mLock);
             }
 
-            if (mDone && mQueue.empty()) {
+            if (mDone) {
                 break;
             }
 
