@@ -58,16 +58,7 @@ import java.util.Map;
  */
 public final class Settings {
 
-    /**
-     * Intent actions for Settings
-     *
-     * @hide
-     */
-    public static final String SETTINGS_CHANGED = "android.settings.SETTINGS_CHANGED_ACTION";
-
-    public Settings() {
-        /* Empty for API conflicts */
-    }
+    // Intent actions for Settings
 
     /**
      * Activity Action: Show system settings.
@@ -1054,66 +1045,6 @@ public final class Settings {
         public static void setShowGTalkServiceStatus(ContentResolver cr, boolean flag) {
             putInt(cr, SHOW_GTALK_SERVICE_STATUS, flag ? 1 : 0);
         }
-
-        /**
-         * Use the Notification Power Widget? (Who wouldn't!)
-         *
-         * @hide
-         */
-        public static final String EXPANDED_VIEW_WIDGET = "expanded_view_widget";
-
-        /**
-         * Whether to hide the notification screen after clicking on a widget
-         * button
-         *
-         * @hide
-         */
-        public static final String EXPANDED_HIDE_ONCHANGE = "expanded_hide_onchange";
-
-        /**
-         * Notification Indicator Color
-         *
-         * @hide
-         */
-        public static final String EXPANDED_VIEW_WIDGET_COLOR = "expanded_widget_color";
-
-        /**
-         * Widget Buttons to Use
-         *
-         * @hide
-         */
-        public static final String WIDGET_BUTTONS = "expanded_widget_buttons";
-
-        /** @hide */
-        public static final String EXPANDED_BRIGHTNESS_MODE = "expanded_brightness_mode";
-
-        /** @hide */
-        public static final String EXPANDED_NETWORK_MODE = "expanded_network_mode";
-
-        /** @hide */
-        public static final String EXPANDED_SCREENTIMEOUT_MODE = "expanded_screentimeout_mode";
-
-        /** @hide */
-        public static final String EXPANDED_RING_MODE = "expanded_ring_mode";
-
-        /** @hide */
-        public static final String EXPANDED_FLASH_MODE = "expanded_flash_mode";
-
-        /**
-         * Whether custom light sensor levels & values are enabled. The value is
-         * boolean (1 or 0).
-         *
-         * @hide
-         */
-        public static final String LIGHT_SENSOR_CUSTOM = "light_sensor_custom";
-
-        /**
-         * Screen dim value to use if LIGHT_SENSOR_CUSTOM is set. The value is int.
-         * Default is android.os.BRIGHTNESS_DIM.
-         *
-         * @hide
-         */
-        public static final String LIGHT_SCREEN_DIM = "light_screen_dim";
 
         /**
          * The content:// style URL for this table
