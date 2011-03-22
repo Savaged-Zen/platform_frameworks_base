@@ -70,17 +70,12 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.FrameLayout;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-
-import com.android.systemui.R;
-import com.android.systemui.statusbar.policy.StatusBarPolicy;
-
 
 
 public class StatusBarService extends Service implements CommandQueue.Callbacks {
@@ -157,7 +152,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     private boolean mTicking;
 
     // Tracking finger for opening/closing.
-    int mEdgeBorder; // corresponds to R.dimen.status_bar_edge_ignore
+    int mEdgeBorder; 
+    // corresponds to R.dimen.status_bar_edge_ignore
     boolean mTracking;
     VelocityTracker mVelocityTracker;
 

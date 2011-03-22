@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.policy;
+package com.android.systemui.statusbar;
 
 import android.app.StatusBarManager;
 import android.app.AlertDialog;
@@ -65,7 +65,7 @@ import android.view.WindowManagerImpl;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import java.lang.reflect.Method;
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyIntents;
@@ -412,6 +412,10 @@ public class StatusBarPolicy {
                     action.equals(AudioManager.VIBRATE_SETTING_CHANGED_ACTION)) {
                 updateVolume();
             }
+            else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+                int state = intent.getIntExtra("state", 0);
+                mService.setIconVisibility("headset", (state == 1));
+            }
             else if (action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED)) {
                 updateSimState(intent);
             }
@@ -507,6 +511,10 @@ public class StatusBarPolicy {
         mService.setIcon("volume", R.drawable.stat_sys_ringer_silent, 0);
         mService.setIconVisibility("volume", false);
         updateVolume();
+	
+        // headset
+        mService.setIcon("headset", com.android.internal.R.drawable.stat_sys_headset, 0);
+        mService.setIconVisibility("headset", false);
 
 	//wimax
 	mWimaxSettingsHelper = new WimaxSettingsHelper(context);
@@ -520,6 +528,7 @@ public class StatusBarPolicy {
         filter.addAction(Intent.ACTION_POWER_CONNECTED);
         filter.addAction(Intent.ACTION_ALARM_CHANGED);
         filter.addAction(Intent.ACTION_SYNC_STATE_CHANGED);
+	filter.addAction(Intent.ACTION_HEADSET_PLUG);
         filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
         filter.addAction(AudioManager.VIBRATE_SETTING_CHANGED_ACTION);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
