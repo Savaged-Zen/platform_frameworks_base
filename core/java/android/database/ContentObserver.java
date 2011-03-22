@@ -151,7 +151,7 @@ public abstract class ContentObserver {
         }
     }
 
-+/** @hide */
+/** @hide */
     public final void dispatchChange(Uri uri, boolean selfChange) {
         if (mHandler == null) {
             onChangeUri(uri, selfChange);
