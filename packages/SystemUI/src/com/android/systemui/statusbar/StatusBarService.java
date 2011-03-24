@@ -32,6 +32,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -87,8 +88,8 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     public static final String ACTION_STATUSBAR_START
             = "com.android.internal.policy.statusbar.START";
 
-    static final int EXPANDED_LEAVE_ALONE = -10000;
-    static final int EXPANDED_FULL_OPEN = -10001;
+    static int EXPANDED_LEAVE_ALONE = -10000;
+    static int EXPANDED_FULL_OPEN = -10001;
 
     private static final int MSG_ANIMATE = 1000;
     private static final int MSG_ANIMATE_REVEAL = 1001;
@@ -174,6 +175,9 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     // for disabling the status bar
     int mDisabled = 0;
 
+    // for placing status bar at bottom
+    private boolean mStatusBarBottom;
+
     private class ExpandedDialog extends Dialog {
         ExpandedDialog(Context context) {
             super(context, com.android.internal.R.style.Theme_Light_NoTitleBar);
@@ -196,6 +200,21 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     @Override
     public void onCreate() {
+
+        // Decide if status bar is on top or bottom
+        Context context = getApplicationContext();
+        ContentResolver resolver = context.getContentResolver();
+        mStatusBarBottom = (Settings.System.getInt(resolver,
+            Settings.System.STATUS_BAR_BOTTOM, 1) == 1);
+
+        if (mStatusBarBottom) {
+            EXPANDED_LEAVE_ALONE = 10000;
+            EXPANDED_FULL_OPEN = 10001;
+        } else {
+            EXPANDED_LEAVE_ALONE = -10000;
+            EXPANDED_FULL_OPEN = -10001;
+        }
+
         // First set up our views and stuff.
         mDisplay = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         makeStatusBarView(this);
@@ -317,7 +336,11 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         TickerView tickerView = (TickerView)sb.findViewById(R.id.tickerText);
         tickerView.mTicker = mTicker;
 
-        mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking, null);
+        if (mStatusBarBottom) {
+            mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking_bottom, null);
+        } else {
+            mTrackingView = (TrackingView)View.inflate(context, R.layout.status_bar_tracking, null);
+        }
         mTrackingView.mService = this;
         mCloseView = (CloseDragHandle)mTrackingView.findViewById(R.id.close);
         mCloseView.mService = this;
@@ -757,13 +780,22 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (mAnimating) {
             y = (int)mAnimY;
         } else {
-            y = mDisplay.getHeight()-1;
+            if (mStatusBarBottom) {
+                y = mDisplay.getHeight()-1;
+            } else {
+                // BOTTOM STATUS BAR	
+                y = 1;
+            }
         }
         // Let the fling think that we're open so it goes in the right direction
         // and doesn't try to re-open the windowshade.
         mExpanded = true;
         prepareTracking(y, false);
-        performFling(y, -2000.0f, true);
+        if (mStatusBarBottom) {
+            performFling(y, -2000.0f, true);
+        } else {
+            performFling(0, -2000.0f, true);
+        }
     }
 
     void performExpand() {
@@ -816,23 +848,40 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             if (SPEW) Slog.d(TAG, "doAnimation");
             if (SPEW) Slog.d(TAG, "doAnimation before mAnimY=" + mAnimY);
             incrementAnim();
-            if (SPEW) Slog.d(TAG, "doAnimation after  mAnimY=" + mAnimY);
-            if (mAnimY >= mDisplay.getHeight()-1) {
-                if (SPEW) Slog.d(TAG, "Animation completed to expanded state.");
-                mAnimating = false;
-                updateExpandedViewPos(EXPANDED_FULL_OPEN);
-                performExpand();
-            }
-            else if (mAnimY < mStatusBarView.getHeight()) {
-                if (SPEW) Slog.d(TAG, "Animation completed to collapsed state.");
-                mAnimating = false;
-                updateExpandedViewPos(0);
-                performCollapse();
-            }
-            else {
-                updateExpandedViewPos((int)mAnimY);
-                mCurAnimationTime += ANIM_FRAME_DURATION;
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE), mCurAnimationTime);
+            if (mStatusBarBottom) {
+                // BOTTOM STATUS BAR
+                if (mAnimY <= 1) {
+                    if (SPEW) Slog.d(TAG, "Animation completed to expanded state.");
+                    mAnimating = false;
+                    updateExpandedViewPos(EXPANDED_FULL_OPEN);
+                    performExpand();
+                } else if (mAnimY > (mDisplay.getHeight()-mStatusBarView.getHeight())) {
+                    if (SPEW) Slog.d(TAG, "Animation completed to collapsed state.");
+                    mAnimating = false;
+                    updateExpandedViewPos(mDisplay.getHeight());
+                    performCollapse();
+                } else {
+                    updateExpandedViewPos((int)mAnimY);
+                    mCurAnimationTime += ANIM_FRAME_DURATION;
+                    mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE), mCurAnimationTime);
+                }
+            } else {
+                if (SPEW) Slog.d(TAG, "doAnimation after  mAnimY=" + mAnimY);
+                if (mAnimY >= mDisplay.getHeight()-1) {
+                    if (SPEW) Slog.d(TAG, "Animation completed to expanded state.");
+                    mAnimating = false;
+                    updateExpandedViewPos(EXPANDED_FULL_OPEN);
+                    performExpand();
+                } else if (mAnimY < mStatusBarView.getHeight()) {
+                    if (SPEW) Slog.d(TAG, "Animation completed to collapsed state.");
+                    mAnimating = false;
+                    updateExpandedViewPos(0);
+                    performCollapse();
+                } else {
+                    updateExpandedViewPos((int)mAnimY);
+                    mCurAnimationTime += ANIM_FRAME_DURATION;
+                    mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE), mCurAnimationTime);
+                }
             }
         }
     }
@@ -857,18 +906,40 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void doRevealAnimation() {
-        final int h = mCloseView.getHeight() + mStatusBarView.getHeight();
-        if (mAnimatingReveal && mAnimating && mAnimY < h) {
-            incrementAnim();
-            if (mAnimY >= h) {
-                mAnimY = h;
-                updateExpandedViewPos((int)mAnimY);
-            } else {
-                updateExpandedViewPos((int)mAnimY);
-                mCurAnimationTime += ANIM_FRAME_DURATION;
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE_REVEAL),
-                        mCurAnimationTime);
+        final int h;
+        if (mStatusBarBottom) {
+            h = mDisplay.getHeight() - mStatusBarView.getHeight();
+            if (mAnimatingReveal && mAnimating && mAnimY > h) {
+                incrementAnim();
+                if (mAnimY <= h) {
+                    mAnimY = h;
+                    updateExpandedViewPos((int)mAnimY);
+                } else {
+                    updateExpandedViewPos((int)mAnimY);
+                    mCurAnimationTime += ANIM_FRAME_DURATION;
+                    mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE_REVEAL),
+                         mCurAnimationTime);
+                }
             }
+        } else {
+            h = mCloseView.getHeight() + mStatusBarView.getHeight();
+            if (mAnimatingReveal && mAnimating && mAnimY < h) {
+                incrementAnim();
+                if (mAnimY >= h) {
+                    mAnimY = h;
+                    updateExpandedViewPos((int)mAnimY);
+                } else {
+                    updateExpandedViewPos((int)mAnimY);
+                    mCurAnimationTime += ANIM_FRAME_DURATION;
+                    mHandler.sendMessageAtTime(mHandler.obtainMessage(MSG_ANIMATE_REVEAL),
+                            mCurAnimationTime);
+                }
+            }
+        }
+        if (mStatusBarBottom) {
+            if (SPEW) Slog.d(TAG, "doRevealAnimation done! h=" + h
+                + " mAnimY=" + mAnimY
+                + " mAnimatingReveal=" + mAnimatingReveal);
         }
     }
 
@@ -878,7 +949,12 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         if (opening) {
             mAnimAccel = 2000.0f;
             mAnimVel = 200;
-            mAnimY = mStatusBarView.getHeight();
+            if (mStatusBarBottom) {
+                // BOTTOM STATUS BAR
+                mAnimY = mDisplay.getHeight();
+            } else {
+                mAnimY = mStatusBarView.getHeight();
+            }
             updateExpandedViewPos((int)mAnimY);
             mAnimating = true;
             mAnimatingReveal = true;
@@ -908,48 +984,79 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         mAnimY = y;
         mAnimVel = vel;
 
-        //Slog.d(TAG, "starting with mAnimY=" + mAnimY + " mAnimVel=" + mAnimVel);
+        if (mStatusBarBottom) {
+            if (SPEW) {
+                Slog.d(TAG, "performFling launched!" + " - y=" + y + " vel=" + vel + " always=" + always);
+            }
+        }
 
         if (mExpanded) {
-            if (!always && (
-                    vel > 200.0f
-                    || (y > (mDisplayHeight-25) && vel > -200.0f))) {
-                // We are expanded, but they didn't move sufficiently to cause
-                // us to retract.  Animate back to the expanded position.
-                mAnimAccel = 2000.0f;
-                if (vel < 0) {
-                    mAnimVel = 0;
+            if (mStatusBarBottom) {
+                if (!always && (vel > 200.0f || (y > (mDisplayHeight-25) && vel > -200.0f))) {
+                    // We are expanded, but they didn't move sufficiently to cause
+                    // us to retract.  Animate back to the expanded position.
+                    mAnimAccel = 2000.0f;
+                    if (vel < 0) {
+                        mAnimVel = 0;
+                    }
+                } else {
+                    // We are expanded and are now going to animate away.
+                    mAnimAccel = -2000.0f;
+                    if (vel > 0) {
+                        mAnimVel = 0;
+                    }
                 }
-            }
-            else {
-                // We are expanded and are now going to animate away.
-                mAnimAccel = -2000.0f;
-                if (vel > 0) {
-                    mAnimVel = 0;
+            } else {
+                if (!always && (vel < -200.0f || (y < 25 && vel < 200.0f))) {
+                    // We are expanded, but they didn't move sufficiently to cause
+                    // us to retract.  Animate back to the expanded position.
+                    mAnimAccel = 2000.0f;
+                    if (vel < 0) {
+                        mAnimVel = 0;
+                    }
+                } else {
+                    // We are expanded and are now going to animate away.
+                    mAnimAccel = -2000.0f;
+                    if (vel > 0) {
+                        mAnimVel = 0;
+                    }
                 }
             }
         } else {
-            if (always || (
-                    vel > 200.0f
-                    || (y > (mDisplayHeight/2) && vel > -200.0f))) {
-                // We are collapsed, and they moved enough to allow us to
-                // expand.  Animate in the notifications.
-                mAnimAccel = 2000.0f;
-                if (vel < 0) {
-                    mAnimVel = 0;
+            if (mStatusBarBottom) {
+                if (always || (vel < -200.0f || (y < (mDisplayHeight/2) && vel < 200.0f))) {
+                    // We are collapsed, and they moved enough to allow us to
+                    // expand. Animate in the notifications.
+                    mAnimAccel = 2000.0f;
+                    if (vel < 0) {
+                        mAnimVel = 0;
+                    }
+                } else {
+                    // We are collapsed, but they didn't move sufficiently to cause
+                    // us to retract. Animate back to the collapsed position.
+                    mAnimAccel = -2000.0f;
+                    if (vel > 0) {
+                        mAnimVel = 0;
+                    }
                 }
-            }
-            else {
-                // We are collapsed, but they didn't move sufficiently to cause
-                // us to retract.  Animate back to the collapsed position.
-                mAnimAccel = -2000.0f;
-                if (vel > 0) {
-                    mAnimVel = 0;
+            } else {
+                if (always || (vel > 200.0f || (y > (mDisplayHeight/2) && vel > -200.0f))) {
+                    // We are collapsed, and they moved enough to allow us to
+                    // expand.  Animate in the notifications.
+                    mAnimAccel = 2000.0f;
+                    if (vel < 0) {
+                        mAnimVel = 0;
+                    }
+                } else {
+                    // We are collapsed, but they didn't move sufficiently to cause
+                    // us to retract.  Animate back to the collapsed position.
+                    mAnimAccel = -2000.0f;
+                    if (vel > 0) {
+                        mAnimVel = 0;
+                    }
                 }
             }
         }
-        //Slog.d(TAG, "mAnimY=" + mAnimY + " mAnimVel=" + mAnimVel
-        //        + " mAnimAccel=" + mAnimAccel);
 
         long now = SystemClock.uptimeMillis();
         mAnimLastTime = now;
@@ -963,8 +1070,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
 
     boolean interceptTouchEvent(MotionEvent event) {
         if (SPEW) {
-            Slog.d(TAG, "Touch: rawY=" + event.getRawY() + " event=" + event + " mDisabled="
-                + mDisabled);
+            Slog.d(TAG, "Touch: rawY=" + event.getRawY() + " event=" + event + " mDisabled=" + mDisabled);
         }
 
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
@@ -976,62 +1082,131 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         }
 
         final int statusBarSize = mStatusBarView.getHeight();
-        final int hitSize = statusBarSize*2;
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            final int y = (int)event.getRawY();
 
-            if (!mExpanded) {
-                mViewDelta = statusBarSize - y;
-            } else {
-                mTrackingView.getLocationOnScreen(mAbsPos);
-                mViewDelta = mAbsPos[1] + mTrackingView.getHeight() - y;
-            }
-            if ((!mExpanded && y < hitSize) ||
-                    (mExpanded && y > (mDisplay.getHeight()-hitSize))) {
+        if (mStatusBarBottom) {
+            final int hitSize = statusBarSize;
+             if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                final int y = (int)event.getRawY();
+                if (!mExpanded) {
+                    mViewDelta = mDisplay.getHeight() - y;
+                } else {
+                    mTrackingView.getLocationOnScreen(mAbsPos);
+                    // We're moving upwards now, no need for tracking height or y
+                    mViewDelta = mAbsPos[1] - y;
+                }
+                if ((mExpanded && y < hitSize) || (!mExpanded && y > (mDisplay.getHeight()-hitSize))) {
+                    // We drop events at the edge of the screen to make the windowshade come
+                    // down by accident less, especially when pushing open a device with a keyboard
+                    // that rotates (like g1 and droid)
+                    int x = (int)event.getRawX();
+                    final int edgeBorder = mEdgeBorder;
+                    if (x >= edgeBorder && x < mDisplay.getWidth() - edgeBorder) {
+                        prepareTracking(y, !mExpanded); // opening if we're not already fully visible
+                        mVelocityTracker.addMovement(event);
+                    }
+                
+                    if (SPEW) {
+                         Slog.d(TAG, "Touch calculated values - before tracking");
+                         Slog.d(TAG, "hitSize=" + hitSize + " mAbsPos[1]=" + mAbsPos[1] + " mViewDelta=" + mViewDelta);
+                    }
+                } 
+            } else if (mTracking) {
+                mVelocityTracker.addMovement(event);
+                // Change minY relatively to bottom of the screen
+                final int minY = mDisplay.getHeight() - statusBarSize - mCloseView.getHeight();
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    int y = (int)event.getRawY();
+                    // We're moving upwards now
+                    if (mAnimatingReveal && y > minY) {
+                        // nothing
+                    } else {
+                        mAnimatingReveal = false;
+                        updateExpandedViewPos(y - mViewDelta);
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    mVelocityTracker.computeCurrentVelocity(1000);
 
-                // We drop events at the edge of the screen to make the windowshade come
-                // down by accident less, especially when pushing open a device with a keyboard
-                // that rotates (like g1 and droid)
-                int x = (int)event.getRawX();
-                final int edgeBorder = mEdgeBorder;
-                if (x >= edgeBorder && x < mDisplay.getWidth() - edgeBorder) {
-                    prepareTracking(y, !mExpanded);// opening if we're not already fully visible
-                    mVelocityTracker.addMovement(event);
+                    float yVel = mVelocityTracker.getYVelocity();
+                    boolean negative = yVel < 0;
+
+                    float xVel = mVelocityTracker.getXVelocity();
+                    if (xVel < 0) {
+                        xVel = -xVel;
+                    }
+                    if (xVel > 150.0f) {
+                        xVel = 150.0f; // limit how much we care about the x axis
+                    }
+
+                    float vel = (float)Math.hypot(yVel, xVel);
+                    if (negative) {
+                        vel = -vel;
+                    }
+
+                    performFling((int)event.getRawY(), vel, false);
+                }
+            
+                if (SPEW) {
+                    Slog.d(TAG, "Touch calculated values - after tracking");
+                    Slog.d(TAG, "hitSize=" + hitSize + " mAbsPos[1]=" + mAbsPos[1] + " mViewDelta=" + mViewDelta);
                 }
             }
-        } else if (mTracking) {
-            mVelocityTracker.addMovement(event);
-            final int minY = statusBarSize + mCloseView.getHeight();
-            if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                int y = (int)event.getRawY();
-                if (mAnimatingReveal && y < minY) {
-                    // nothing
-                } else  {
-                    mAnimatingReveal = false;
-                    updateExpandedViewPos(y + mViewDelta);
-                }
-            } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                mVelocityTracker.computeCurrentVelocity(1000);
+        } else {
+            final int hitSize = statusBarSize*2;
 
-                float yVel = mVelocityTracker.getYVelocity();
-                boolean negative = yVel < 0;
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                final int y = (int)event.getRawY();
 
-                float xVel = mVelocityTracker.getXVelocity();
-                if (xVel < 0) {
-                    xVel = -xVel;
+                if (!mExpanded) {
+                    mViewDelta = statusBarSize - y;
+                } else {
+                    mTrackingView.getLocationOnScreen(mAbsPos);
+                    mViewDelta = mAbsPos[1] + mTrackingView.getHeight() - y;
                 }
-                if (xVel > 150.0f) {
-                    xVel = 150.0f; // limit how much we care about the x axis
+                if ((!mExpanded && y < hitSize) || (mExpanded && y > (mDisplay.getHeight()-hitSize))) {
+                    // We drop events at the edge of the screen to make the windowshade come
+                    // down by accident less, especially when pushing open a device with a keyboard
+                    // that rotates (like g1 and droid)
+                    int x = (int)event.getRawX();
+                    final int edgeBorder = mEdgeBorder;
+                    if (x >= edgeBorder && x < mDisplay.getWidth() - edgeBorder) {
+                        prepareTracking(y, !mExpanded); // opening if we're not already fully visible
+                        mVelocityTracker.addMovement(event);
+                    }
+                }
+            } else if (mTracking) {
+                mVelocityTracker.addMovement(event);
+                final int minY = statusBarSize + mCloseView.getHeight();
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    int y = (int)event.getRawY();
+                    if (mAnimatingReveal && y < minY) {
+                        // nothing
+                    } else {
+                        mAnimatingReveal = false;
+                        updateExpandedViewPos(y + mViewDelta);
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    mVelocityTracker.computeCurrentVelocity(1000);
+
+                    float yVel = mVelocityTracker.getYVelocity();
+                    boolean negative = yVel < 0;
+
+                    float xVel = mVelocityTracker.getXVelocity();
+                    if (xVel < 0) {
+                        xVel = -xVel;
+                    }
+                    if (xVel > 150.0f) {
+                        xVel = 150.0f; // limit how much we care about the x axis
+                    }
+
+                    float vel = (float)Math.hypot(yVel, xVel);
+                    if (negative) {
+                        vel = -vel;
+                    }
+
+                    performFling((int)event.getRawY(), vel, false);
                 }
 
-                float vel = (float)Math.hypot(yVel, xVel);
-                if (negative) {
-                    vel = -vel;
-                }
-
-                performFling((int)event.getRawY(), vel, false);
             }
-
         }
         return false;
     }
@@ -1064,7 +1239,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                 v.getLocationOnScreen(pos);
                 Intent overlay = new Intent();
                 overlay.setSourceBounds(
-                        new Rect(pos[0], pos[1], pos[0]+v.getWidth(), pos[1]+v.getHeight()));
+                        new Rect(pos[0], pos[1], pos[0] + v.getWidth(), pos[1] + v.getHeight()));
                 try {
                     mIntent.send(StatusBarService.this, 0, overlay);
                 } catch (PendingIntent.CanceledException e) {
@@ -1264,7 +1439,13 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = getExpandedHeight();
         lp.x = 0;
-        mTrackingPosition = lp.y = -disph; // sufficiently large negative
+
+        if (mStatusBarBottom) {
+             // BOTTOM STATUS BAR
+             mTrackingPosition = lp.y = disph; // sufficiently large positive
+        } else {
+            mTrackingPosition = lp.y = -disph; // sufficiently large negative
+        }
         lp.type = WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
         lp.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
@@ -1303,6 +1484,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     }
 
     void updateExpandedViewPos(int expandedPosition) {
+        int h;
         if (SPEW) {
             Slog.d(TAG, "updateExpandedViewPos before expandedPosition=" + expandedPosition
                     + " mTrackingParams.y=" 
@@ -1310,21 +1492,37 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
                     + " mTrackingPosition=" + mTrackingPosition);
         }
 
-        int h = mStatusBarView.getHeight();
+        if (mStatusBarBottom) {
+            // BOTTOM STATUS BAR
+            // The expandDialog (notifications) must start at the top of the screen, as the status bar is at the bottom
+            h = 0;
+        } else {
+            h = mStatusBarView.getHeight();
+        }
         int disph = mDisplay.getHeight();
 
         // If the expanded view is not visible, make sure they're still off screen.
         // Maybe the view was resized.
         if (!mExpandedVisible) {
             if (mTrackingView != null) {
-                mTrackingPosition = -disph;
+                if(mStatusBarBottom) {
+                    // BOTTOM STATUS BAR
+                    mTrackingPosition = disph;
+                } else {
+                    mTrackingPosition = -disph;
+                }
                 if (mTrackingParams != null) {
                     mTrackingParams.y = mTrackingPosition;
                     WindowManagerImpl.getDefault().updateViewLayout(mTrackingView, mTrackingParams);
                 }
             }
             if (mExpandedParams != null) {
-                mExpandedParams.y = -disph;
+                if(mStatusBarBottom) {
+                    // BOTTOM STATUS BAR
+                    mExpandedParams.y = disph;
+                } else {
+                    mExpandedParams.y = -disph;
+                }
                 mExpandedDialog.getWindow().setAttributes(mExpandedParams);
             }
             return;
@@ -1334,18 +1532,33 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         int pos;
         if (expandedPosition == EXPANDED_FULL_OPEN) {
             pos = h;
-        }
-        else if (expandedPosition == EXPANDED_LEAVE_ALONE) {
+        } else if (expandedPosition == EXPANDED_LEAVE_ALONE) {
             pos = mTrackingPosition;
-        }
-        else {
-            if (expandedPosition <= disph) {
-                pos = expandedPosition;
+        } else {
+            if (mStatusBarBottom) {
+                // BOTTOM STATUS BAR
+                if (expandedPosition >= 0) {
+                    pos = expandedPosition;
+                } else {
+                    pos = disph;
+                }
+                pos -= mCloseView.getHeight();
             } else {
-                pos = disph;
+                if (expandedPosition <= disph) {
+                    pos = expandedPosition;
+                } else {
+                    pos = disph;
+                }
+                pos -= disph-h;
             }
-            pos -= disph-h;
         }
+
+        if (mStatusBarBottom) {
+            // BOTTOM STATUS BAR
+            if(pos<0){pos=0;}
+            mTrackingPosition = mTrackingParams.y = pos;
+        }
+
         mTrackingPosition = mTrackingParams.y = pos;
         mTrackingParams.height = disph-h;
         WindowManagerImpl.getDefault().updateViewLayout(mTrackingView, mTrackingParams);
@@ -1358,36 +1571,75 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
             final int contentsBottom = mPositionTmp[1] + mExpandedContents.getHeight();
 
             if (expandedPosition != EXPANDED_LEAVE_ALONE) {
-                mExpandedParams.y = pos + mTrackingView.getHeight()
+                if (mStatusBarBottom) {
+                    // BOTTOM STATUS BAR
+                    mExpandedParams.y = pos + mCloseView.getHeight();
+                    int max = mDisplay.getHeight();
+                    if (mExpandedParams.y > max) {
+                        mExpandedParams.y = max;
+                    }
+                    int min = mCloseView.getHeight();
+                    if (mExpandedParams.y < min) {
+                        mExpandedParams.y = min;
+                        mTrackingParams.y = 0;
+                    }
+                    boolean visible = mTrackingPosition < mDisplay.getHeight();
+                    if (!visible) {
+                        // if the contents aren't visible, move the expanded view way off screen
+                        // because the window itself extends below the content view.
+                        mExpandedParams.y = disph;
+                    }
+                    mExpandedDialog.getWindow().setAttributes(mExpandedParams);
+
+                    if (SPEW) {
+                        Slog.d(TAG, "updateExpandedViewPos visibilityChanged(" + visible + ")");
+                        visibilityChanged(visible);
+                
+                        Slog.d(TAG, "updateExpandedViewPos after expandedPosition=" + expandedPosition
+                            + " mTrackingParams.y=" + mTrackingParams.y
+                            + " mTrackingParams.height=" + mTrackingParams.height
+                            + " mTrackingView.getHeight=" + mTrackingView.getHeight()
+                            + " mTrackingPosition=" + mTrackingPosition
+                            + " mCloseView.getHeight=" + mCloseView.getHeight()
+                            + " closePos=" + closePos
+                            + " mExpandedParams.y=" + mExpandedParams.y
+                            + " mExpandedParams.height=" + mExpandedParams.height
+                            + " contentsBottom=" + contentsBottom
+                            + " mExpandedContents.getHeight()=" + mExpandedContents.getHeight()
+                            + " mExpandedContents location =" + mPositionTmp[1]);
+                    }
+               } else {
+                    mExpandedParams.y = pos + mTrackingView.getHeight()
                         - (mTrackingParams.height-closePos) - contentsBottom;
-                int max = h;
-                if (mExpandedParams.y > max) {
-                    mExpandedParams.y = max;
-                }
-                int min = mTrackingPosition;
-                if (mExpandedParams.y < min) {
-                    mExpandedParams.y = min;
-                }
+                    int max = h;
+                    if (mExpandedParams.y > max) {
+                        mExpandedParams.y = max;
+                    }
+                    int min = mTrackingPosition;
+                    if (mExpandedParams.y < min) {
+                        mExpandedParams.y = min;
+                    }
 
-                boolean visible = (mTrackingPosition + mTrackingView.getHeight()) > h;
-                if (!visible) {
-                    // if the contents aren't visible, move the expanded view way off screen
-                    // because the window itself extends below the content view.
-                    mExpandedParams.y = -disph;
-                }
-                mExpandedDialog.getWindow().setAttributes(mExpandedParams);
+                    boolean visible = (mTrackingPosition + mTrackingView.getHeight()) > h;
+                    if (!visible) {
+                        // if the contents aren't visible, move the expanded view way off screen
+                        // because the window itself extends below the content view.
+                        mExpandedParams.y = -disph;
+                    }
+                    mExpandedDialog.getWindow().setAttributes(mExpandedParams);
 
-                if (SPEW) Slog.d(TAG, "updateExpandedViewPos visibilityChanged(" + visible + ")");
-                visibilityChanged(visible);
+                    if (SPEW) Slog.d(TAG, "updateExpandedViewPos visibilityChanged(" + visible + ")");
+                    visibilityChanged(visible);
+                }
             }
-        }
 
-        if (SPEW) {
-            Slog.d(TAG, "updateExpandedViewPos after  expandedPosition=" + expandedPosition
-                    + " mTrackingParams.y=" + mTrackingParams.y
-                    + " mTrackingPosition=" + mTrackingPosition
-                    + " mExpandedParams.y=" + mExpandedParams.y
-                    + " mExpandedParams.height=" + mExpandedParams.height);
+            if (SPEW) {
+                Slog.d(TAG, "updateExpandedViewPos after  expandedPosition=" + expandedPosition
+                        + " mTrackingParams.y=" + mTrackingParams.y
+                        + " mTrackingPosition=" + mTrackingPosition
+                        + " mExpandedParams.y=" + mExpandedParams.y
+                        + " mExpandedParams.height=" + mExpandedParams.height);
+            }
         }
     }
 
