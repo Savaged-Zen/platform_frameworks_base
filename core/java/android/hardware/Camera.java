@@ -911,11 +911,7 @@ public class Camera {
      * @see #getParameters()
      */
     public void setParameters(Parameters params) {
-        try {
-            native_setParameters(params.flatten());
-        } catch (RuntimeException ex) {
-            Log.e(TAG, "Failed to set all parameters");
-        }
+        native_setParameters(params.flatten());
     }
 
     /**
@@ -1029,7 +1025,6 @@ public class Camera {
         private static final String KEY_ZOOM_SUPPORTED = "zoom-supported";
         private static final String KEY_SMOOTH_ZOOM_SUPPORTED = "smooth-zoom-supported";
         private static final String KEY_FOCUS_DISTANCES = "focus-distances";
-        private static final String KEY_CAF = "continuous-af";
         private static final String KEY_SHARPNESS = "sharpness";
         private static final String KEY_MAX_SHARPNESS = "sharpness-max";
         private static final String KEY_DEFAULT_SHARPNESS = "sharpness-def";
@@ -1039,10 +1034,6 @@ public class Camera {
         private static final String KEY_SATURATION = "saturation";
         private static final String KEY_MAX_SATURATION = "saturation-max";
         private static final String KEY_DEFAULT_SATURATION = "saturation-def";
-        private static final String KEY_BRIGHTNESS = "brightness";
-        private static final String KEY_MAX_BRIGHTNESS = "brightness-max";
-        private static final String KEY_DEFAULT_BRIGHTNESS = "brightness-def";
-        private static final String KEY_SMART_CONTRAST = "smart-contrast";
 
         // Parameter key suffix for supported values.
         private static final String SUPPORTED_VALUES_SUFFIX = "-values";
@@ -1070,32 +1061,11 @@ public class Camera {
         public static final String EFFECT_BLACKBOARD = "blackboard";
         public static final String EFFECT_AQUA = "aqua";
 
-        // Values for auto exposure settings.
-        public static final String AUTO_EXPOSURE_FRAME_AVG = "meter-average";
-        public static final String AUTO_EXPOSURE_CENTER_WEIGHTED = "meter-center";
-        public static final String AUTO_EXPOSURE_SPOT_METERING = "meter-spot";
-
         // Values for antibanding settings.
         public static final String ANTIBANDING_AUTO = "auto";
         public static final String ANTIBANDING_50HZ = "50hz";
         public static final String ANTIBANDING_60HZ = "60hz";
         public static final String ANTIBANDING_OFF = "off";
-
-        //Values for ISO settings
-
-        public static final String ISO_AUTO = "auto";
-        public static final String ISO_HJR = "deblur";
-        public static final String ISO_100 = "100";
-        public static final String ISO_200 = "200";
-        public static final String ISO_400 = "400";
-        public static final String ISO_800 = "800";
-        public static final String ISO_1250 = "1250";
-        
-        //Values for Lens Shading
-
-        public static final String LENSSHADE_ENABLE = "enable";
-        public static final String LENSSHADE_DISABLE= "disable";
-
 
         // Values for flash mode settings.
         /**
@@ -1409,10 +1379,8 @@ public class Camera {
          * @return the int value of the parameter
          */
         public int getInt(String key) {
-            String value = mMap.get(key);
-            return value == null ? 0 : Integer.parseInt(value);
+            return Integer.parseInt(mMap.get(key));
         }
-
 
         /**
          * Sets the dimensions for preview pictures.
@@ -2089,7 +2057,6 @@ public class Camera {
             return getInt(KEY_DEFAULT_CONTRAST, 0);
         }
 
-
         /**
          * Get Saturation level
          *
@@ -2128,46 +2095,6 @@ public class Camera {
          */
         public int getDefaultSaturation() {
             return getInt(KEY_DEFAULT_SATURATION, 0);
-        }
-
-        /**
-         * Get brightness level
-         *
-         * @return brightness level
-         */
-        public int getBrightness(){
-            return getInt(KEY_BRIGHTNESS, 0);
-        }
-
-        /**
-         * Set brightness level
-         *
-         * @param brightness level
-         */
-        public void setBrightness(int brightness){
-            if((brightness < 0 ) || (brightness > getMaxBrightness()))
-                throw new IllegalArgumentException(
-                        "Invalid Brightness " + brightness);
-
-            set(KEY_BRIGHTNESS, String.valueOf(brightness));
-        }
-
-        /**
-         * Get Max Brightness Level
-         *
-         * @return max brightness level
-         */
-        public int getMaxBrightness(){
-            return getInt(KEY_MAX_BRIGHTNESS, 0);
-        }
-
-        /**
-         * Get default brightness level
-         * 
-         * @return default brightness level
-         */
-        public int getDefaultBrightness() {
-            return getInt(KEY_DEFAULT_BRIGHTNESS, 0);
         }
 
         /**
@@ -2549,7 +2476,7 @@ public class Camera {
          */
         public boolean isZoomSupported() {
             String str = get(KEY_ZOOM_SUPPORTED);
-            return TRUE.equals(str) && getMaxZoom() > 0;
+            return TRUE.equals(str);
         }
 
         /**
@@ -2627,55 +2554,6 @@ public class Camera {
             splitFloat(get(KEY_FOCUS_DISTANCES), output);
         }
 
-        /**
-         * Gets the current Continuous AF setting.
-         *
-         * @return one of CONTINUOUS_AF_XXX string constant. null if continuous AF
-         *         setting is not supported.
-         *
-         */
-        public String getContinuousAf() {
-            return get(KEY_CAF);
-        }
-
-        /**
-         * Sets the current Continuous AF mode.
-         * @param value CONTINUOUS_AF_XXX string constants.
-         *
-         */
-        public void setContinuousAf(String value) {
-            set(KEY_CAF, value);
-        }
-
-        /**
-         * Gets the supported Continuous AF modes.
-         *
-         * @return a List of CONTINUOUS_AF_XXX string constant. null if continuous AF
-         *         setting is not supported.
-         *
-         */
-        public List<String> getSupportedContinuousAfModes() {
-            String str = get(KEY_CAF + SUPPORTED_VALUES_SUFFIX);
-            return split(str);
-        }
-
-        /**
-         * Sets the smart-contrast feature
-         * @param boolean
-         */
-        public void setSmartContrastEnabled(boolean enabled) {
-            set(KEY_SMART_CONTRAST, enabled ? "on" : "off");
-        }
-        
-        /**
-         * Gets the value of smart-contrast
-         *
-         * @return if smart-contrast is enabled
-         */
-        public boolean isSmartContrastEnabled() {
-            return "on".equals(get(KEY_SMART_CONTRAST));
-        }
-
         // Splits a comma delimited string to an ArrayList of String.
         // Return null if the passing string is null or the size is 0.
         private ArrayList<String> split(String str) {
@@ -2730,9 +2608,6 @@ public class Camera {
 
         // Returns the value of a float parameter.
         private float getFloat(String key, float defaultValue) {
-            if (!mMap.containsKey(key)) {
-                return defaultValue;
-            }
             try {
                 return Float.parseFloat(mMap.get(key));
             } catch (NumberFormatException ex) {
@@ -2742,9 +2617,6 @@ public class Camera {
 
         // Returns the value of a integer parameter.
         private int getInt(String key, int defaultValue) {
-            if (!mMap.containsKey(key)) {
-                return defaultValue;
-            }
             try {
                 return Integer.parseInt(mMap.get(key));
             } catch (NumberFormatException ex) {
