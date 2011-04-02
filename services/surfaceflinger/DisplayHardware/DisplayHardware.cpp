@@ -185,14 +185,14 @@ void DisplayHardware::init(uint32_t dpy)
      */
     if (property_get("qemu.sf.lcd_density", property, NULL) <= 0) {
         if (property_get("ro.sf.lcd_density", property, NULL) <= 0) {
-            LOGW("ro.sf.lcd_density not defined, using 190 dpi by default.");
-            strcpy(property, "190");
+            LOGW("ro.sf.lcd_density not defined, using 160 dpi by default.");
+            strcpy(property, "160");
         }
     } else {
         /* for the emulator case, reset the dpi values too */
         mDpiX = mDpiY = atoi(property);
     }
-    mDensity = atoi(property) * (1.0f/190.0f);
+    mDensity = atoi(property) * (1.0f/160.0f);
 
 
     /*
