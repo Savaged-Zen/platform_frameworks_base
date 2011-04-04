@@ -183,10 +183,10 @@ public class Camera {
          * the right of the screen, the value should be 270.
          *
          * @see #setDisplayOrientation(int)
-         * @see Parameters#setRotation(int)
-         * @see Parameters#setPreviewSize(int, int)
-         * @see Parameters#setPictureSize(int, int)
-         * @see Parameters#setJpegThumbnailSize(int, int)
+         * @see #setRotation(int)
+         * @see #setPreviewSize(int, int)
+         * @see #setPictureSize(int, int)
+         * @see #setJpegThumbnailSize(int, int)
          */
         public int orientation;
     };
@@ -609,10 +609,9 @@ public class Camera {
     public interface AutoFocusCallback
     {
         /**
-         * Called when the camera auto focus completes.  If the camera
-         * does not support auto-focus and autoFocus is called,
-         * onAutoFocus will be called immediately with a fake value of
-         * <code>success</code> set to <code>true</code>.
+         * Called when the camera auto focus completes.  If the camera does not
+         * support auto-focus and autoFocus is called, onAutoFocus will be
+         * called immediately with success.
          *
          * @param success true if focus was successful, false if otherwise
          * @param camera  the Camera service object
@@ -786,12 +785,12 @@ public class Camera {
      * is, the image is reflected along the central vertical axis of the camera
      * sensor. So the users can see themselves as looking into a mirror.
      *
-     * <p>This does not affect the order of byte array passed in {@link
+     * This does not affect the order of byte array passed in {@link
      * PreviewCallback#onPreviewFrame}, JPEG pictures, or recorded videos. This
      * method is not allowed to be called during preview.
      *
-     * <p>If you want to make the camera image show in the same orientation as
-     * the display, you can use the following code.
+     * If you want to make the camera image show in the same orientation as
+     * the display, you can use the following code.<p>
      * <pre>
      * public static void setCameraDisplayOrientation(Activity activity,
      *         int cameraId, android.hardware.Camera camera) {
@@ -911,7 +910,11 @@ public class Camera {
      * @see #getParameters()
      */
     public void setParameters(Parameters params) {
-        native_setParameters(params.flatten());
+        try {
+            native_setParameters(params.flatten());
+        } catch (RuntimeException ex) {
+            Log.e(TAG, "Failed to set all parameters");
+        }
     }
 
     /**
@@ -1025,6 +1028,7 @@ public class Camera {
         private static final String KEY_ZOOM_SUPPORTED = "zoom-supported";
         private static final String KEY_SMOOTH_ZOOM_SUPPORTED = "smooth-zoom-supported";
         private static final String KEY_FOCUS_DISTANCES = "focus-distances";
+        private static final String KEY_CAF = "continuous-af";
         private static final String KEY_SHARPNESS = "sharpness";
         private static final String KEY_MAX_SHARPNESS = "sharpness-max";
         private static final String KEY_DEFAULT_SHARPNESS = "sharpness-def";
@@ -1034,7 +1038,11 @@ public class Camera {
         private static final String KEY_SATURATION = "saturation";
         private static final String KEY_MAX_SATURATION = "saturation-max";
         private static final String KEY_DEFAULT_SATURATION = "saturation-def";
-
+        private static final String KEY_BRIGHTNESS = "brightness";
+        private static final String KEY_MAX_BRIGHTNESS = "brightness-max";
+        private static final String KEY_DEFAULT_BRIGHTNESS = "brightness-def";
+        private static final String KEY_SMART_CONTRAST = "smart-contrast";
+        
         // Parameter key suffix for supported values.
         private static final String SUPPORTED_VALUES_SUFFIX = "-values";
 
@@ -1061,11 +1069,33 @@ public class Camera {
         public static final String EFFECT_BLACKBOARD = "blackboard";
         public static final String EFFECT_AQUA = "aqua";
 
+        // Values for auto exposure settings.
+        public static final String AUTO_EXPOSURE_FRAME_AVG = "meter-average";
+        public static final String AUTO_EXPOSURE_CENTER_WEIGHTED = "meter-center";
+        public static final String AUTO_EXPOSURE_SPOT_METERING = "meter-spot";
+
         // Values for antibanding settings.
         public static final String ANTIBANDING_AUTO = "auto";
         public static final String ANTIBANDING_50HZ = "50hz";
         public static final String ANTIBANDING_60HZ = "60hz";
         public static final String ANTIBANDING_OFF = "off";
+
+        //Values for ISO settings
+
+        public static final String ISO_AUTO = "auto";
+        public static final String ISO_HJR = "deblur";
+        public static final String ISO_100 = "100";
+        public static final String ISO_200 = "200";
+        public static final String ISO_400 = "400";
+        public static final String ISO_800 = "800";
+        public static final String ISO_1250 = "1250";
+        
+        //Values for Lens Shading
+
+        public static final String LENSSHADE_ENABLE = "enable";
+        public static final String LENSSHADE_DISABLE= "disable";
+
+
 
         // Values for flash mode settings.
         /**
@@ -1266,6 +1296,11 @@ public class Camera {
         private static final String PIXEL_FORMAT_RGB565 = "rgb565";
         private static final String PIXEL_FORMAT_JPEG = "jpeg";
 
+        //Values for Continuous AF
+
+        public static final String CAF_OFF = "caf-off";
+        public static final String CAF_ON = "caf-on";
+
         private HashMap<String, String> mMap;
 
         private Parameters() {
@@ -1379,7 +1414,8 @@ public class Camera {
          * @return the int value of the parameter
          */
         public int getInt(String key) {
-            return Integer.parseInt(mMap.get(key));
+            String value = mMap.get(key);
+            return value == null ? 0 : Integer.parseInt(value);
         }
 
         /**
@@ -1780,27 +1816,26 @@ public class Camera {
          * the orientation in the EXIF header will be missing or 1 (row #0 is
          * top and column #0 is left side).
          *
-         * <p>If applications want to rotate the picture to match the orientation
+         * If applications want to rotate the picture to match the orientation
          * of what users see, apps should use {@link
          * android.view.OrientationEventListener} and {@link CameraInfo}.
          * The value from OrientationEventListener is relative to the natural
          * orientation of the device. CameraInfo.orientation is the angle
-         * between camera orientation and natural device orientation. The sum
+         * between camera orientation and natural device orientation. The sum or
          * of the two is the rotation angle for back-facing camera. The
          * difference of the two is the rotation angle for front-facing camera.
          * Note that the JPEG pictures of front-facing cameras are not mirrored
          * as in preview display.
          *
-         * <p>For example, suppose the natural orientation of the device is
+         * For example, suppose the natural orientation of the device is
          * portrait. The device is rotated 270 degrees clockwise, so the device
          * orientation is 270. Suppose a back-facing camera sensor is mounted in
          * landscape and the top side of the camera sensor is aligned with the
          * right edge of the display in natural orientation. So the camera
          * orientation is 90. The rotation should be set to 0 (270 + 90).
          *
-         * <p>The reference code is as follows.
+         * The reference code is as follows.
          *
-	 * <pre>
          * public void public void onOrientationChanged(int orientation) {
          *     if (orientation == ORIENTATION_UNKNOWN) return;
          *     android.hardware.Camera.CameraInfo info =
@@ -1815,7 +1850,6 @@ public class Camera {
          *     }
          *     mParameters.setRotation(rotation);
          * }
-	 * </pre>
          *
          * @param rotation The rotation angle in degrees relative to the
          *                 orientation of the camera. Rotation can only be 0,
@@ -1977,6 +2011,7 @@ public class Camera {
             return split(str);
         }
 
+
         /**
          * Get Sharpness level
          *
@@ -2098,6 +2133,46 @@ public class Camera {
         }
 
         /**
+         * Get brightness level
+         *
+         * @return brightness level
+         */
+        public int getBrightness(){
+            return getInt(KEY_BRIGHTNESS, 0);
+        }
+
+        /**
+         * Set brightness level
+         *
+         * @param brightness level
+         */
+        public void setBrightness(int brightness){
+            if((brightness < 0 ) || (brightness > getMaxBrightness()))
+                throw new IllegalArgumentException(
+                        "Invalid Brightness " + brightness);
+
+            set(KEY_BRIGHTNESS, String.valueOf(brightness));
+        }
+
+        /**
+         * Get Max Brightness Level
+         *
+         * @return max brightness level
+         */
+        public int getMaxBrightness(){
+            return getInt(KEY_MAX_BRIGHTNESS, 0);
+        }
+
+        /**
+         * Get default brightness level
+         * 
+         * @return default brightness level
+         */
+        public int getDefaultBrightness() {
+            return getInt(KEY_DEFAULT_BRIGHTNESS, 0);
+        }
+
+        /**
          * Gets the current antibanding setting.
          *
          * @return current antibanding. null if antibanding setting is not
@@ -2130,95 +2205,6 @@ public class Camera {
          */
         public List<String> getSupportedAntibanding() {
             String str = get(KEY_ANTIBANDING + SUPPORTED_VALUES_SUFFIX);
-            return split(str);
-        }
-
-        /**
-         * Gets the current ISO setting.
-         *
-         * @return one of ISO_XXX string constant. null if ISO
-         *         setting is not supported.
-         */
-        public String getISOValue() {
-            return get(KEY_ISO_MODE);
-        }
-
-        /**
-         * Sets the ISO.
-         *
-         * @param iso ISO_XXX string constant.
-         */
-        public void setISOValue(String iso) {
-            set(KEY_ISO_MODE, iso);
-        }
-
-         /**
-         * Gets the supported ISO values.
-         *
-         * @return a List of FLASH_MODE_XXX string constants. null if flash mode
-         *         setting is not supported.
-         */
-        public List<String> getSupportedIsoValues() {
-            String str = get(KEY_ISO_MODE + SUPPORTED_VALUES_SUFFIX);
-            return split(str);
-        }
-
-         /**
-         * Gets the current LensShade Mode.
-         *
-         * @return LensShade Mode
-         */
-        public String getLensShade() {
-            return get(KEY_LENSSHADE);
-        }
-
-        /**
-         * Sets the current LensShade Mode.
-         *
-         * @return LensShade Mode
-         */
-        public void setLensShade(String lensshade) {
-            set(KEY_LENSSHADE, lensshade);
-        }
-
-         /**
-         * Gets the supported Lensshade modes.
-         *
-         * @return a List of LENS_MODE_XXX string constants. null if lens mode
-         *         setting is not supported.
-         */
-        public List<String> getSupportedLensShadeModes() {
-            String str = get(KEY_LENSSHADE + SUPPORTED_VALUES_SUFFIX);
-            return split(str);
-        }
-
-         /**
-         * Gets the current auto exposure setting.
-         *
-         * @return one of AUTO_EXPOSURE_XXX string constant. null if auto exposure
-         *         setting is not supported.
-         */
-        public String getAutoExposure() {
-            return get(KEY_AUTO_EXPOSURE);
-        }
-
-        /**
-         * Sets the current auto exposure setting.
-         *
-         * @param value AUTO_EXPOSURE_XXX string constants.
-         */
-        public void setAutoExposure(String value) {
-            set(KEY_AUTO_EXPOSURE, value);
-        }
-
-        /**
-         * Gets the supported auto exposure setting.
-         *
-         * @return a List of AUTO_EXPOSURE_XXX string constants. null if auto exposure
-         *         setting is not supported.
-         */
-        public List<String> getSupportedAutoexposure() {
-            String str = get(KEY_AUTO_EXPOSURE + SUPPORTED_VALUES_SUFFIX);
             return split(str);
         }
 
@@ -2476,7 +2462,7 @@ public class Camera {
          */
         public boolean isZoomSupported() {
             String str = get(KEY_ZOOM_SUPPORTED);
-            return TRUE.equals(str);
+            return TRUE.equals(str) && getMaxZoom() > 0;
         }
 
         /**
@@ -2554,6 +2540,144 @@ public class Camera {
             splitFloat(get(KEY_FOCUS_DISTANCES), output);
         }
 
+        /**
+         * Gets the current Continuous AF setting.
+         *
+         * @return one of CONTINUOUS_AF_XXX string constant. null if continuous AF
+         *         setting is not supported.
+         *
+         */
+        public String getContinuousAf() {
+            return get(KEY_CAF);
+        }
+
+        /**
+         * Sets the current Continuous AF mode.
+         * @param value CONTINUOUS_AF_XXX string constants.
+         *
+         */
+        public void setContinuousAf(String value) {
+            set(KEY_CAF, value);
+        }
+
+        /**
+         * Gets the supported Continuous AF modes.
+         *
+         * @return a List of CONTINUOUS_AF_XXX string constant. null if continuous AF
+         *         setting is not supported.
+         *
+         */
+        public List<String> getSupportedContinuousAfModes() {
+            String str = get(KEY_CAF + SUPPORTED_VALUES_SUFFIX);
+            return split(str);
+        }
+
+        /**
+         * Gets the current ISO setting.
+         *
+         * @return one of ISO_XXX string constant. null if ISO
+         *         setting is not supported.
+         */
+        public String getISOValue() {
+            return get(KEY_ISO_MODE);
+        }
+
+        /**
+         * Sets the ISO.
+         *
+         * @param iso ISO_XXX string constant.
+         */
+        public void setISOValue(String iso) {
+            set(KEY_ISO_MODE, iso);
+        }
+
+         /**
+         * Gets the supported ISO values.
+         *
+         * @return a List of FLASH_MODE_XXX string constants. null if flash mode
+         *         setting is not supported.
+         */
+        public List<String> getSupportedIsoValues() {
+            String str = get(KEY_ISO_MODE + SUPPORTED_VALUES_SUFFIX);
+            return split(str);
+        }
+
+         /**
+         * Gets the current LensShade Mode.
+         *
+         * @return LensShade Mode
+         */
+        public String getLensShade() {
+            return get(KEY_LENSSHADE);
+        }
+
+        /**
+         * Sets the current LensShade Mode.
+         *
+         * @return LensShade Mode
+         */
+        public void setLensShade(String lensshade) {
+            set(KEY_LENSSHADE, lensshade);
+        }
+
+         /**
+         * Gets the supported Lensshade modes.
+         *
+         * @return a List of LENS_MODE_XXX string constants. null if lens mode
+         *         setting is not supported.
+         */
+        public List<String> getSupportedLensShadeModes() {
+            String str = get(KEY_LENSSHADE + SUPPORTED_VALUES_SUFFIX);
+            return split(str);
+        }
+
+         /**
+         * Gets the current auto exposure setting.
+         *
+         * @return one of AUTO_EXPOSURE_XXX string constant. null if auto exposure
+         *         setting is not supported.
+         */
+        public String getAutoExposure() {
+            return get(KEY_AUTO_EXPOSURE);
+        }
+
+        /**
+         * Sets the current auto exposure setting.
+         *
+         * @param value AUTO_EXPOSURE_XXX string constants.
+         */
+        public void setAutoExposure(String value) {
+            set(KEY_AUTO_EXPOSURE, value);
+        }
+
+        /**
+         * Gets the supported auto exposure setting.
+         *
+         * @return a List of AUTO_EXPOSURE_XXX string constants. null if auto exposure
+         *         setting is not supported.
+         */
+        public List<String> getSupportedAutoexposure() {
+            String str = get(KEY_AUTO_EXPOSURE + SUPPORTED_VALUES_SUFFIX);
+            return split(str);
+        }
+
+        /**
+         * Sets the smart-contrast feature
+         * @param boolean
+         */
+        public void setSmartContrastEnabled(boolean enabled) {
+            set(KEY_SMART_CONTRAST, enabled ? "on" : "off");
+        }
+        
+        /**
+         * Gets the value of smart-contrast
+         *
+         * @return if smart-contrast is enabled
+         */
+        public boolean isSmartContrastEnabled() {
+            return "on".equals(get(KEY_SMART_CONTRAST));
+        }
+        
         // Splits a comma delimited string to an ArrayList of String.
         // Return null if the passing string is null or the size is 0.
         private ArrayList<String> split(String str) {
@@ -2608,6 +2732,9 @@ public class Camera {
 
         // Returns the value of a float parameter.
         private float getFloat(String key, float defaultValue) {
+            if (!mMap.containsKey(key)) {
+                return defaultValue;
+            }
             try {
                 return Float.parseFloat(mMap.get(key));
             } catch (NumberFormatException ex) {
@@ -2617,6 +2744,9 @@ public class Camera {
 
         // Returns the value of a integer parameter.
         private int getInt(String key, int defaultValue) {
+            if (!mMap.containsKey(key)) {
+                return defaultValue;
+            }
             try {
                 return Integer.parseInt(mMap.get(key));
             } catch (NumberFormatException ex) {
