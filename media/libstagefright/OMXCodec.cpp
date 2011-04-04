@@ -38,9 +38,6 @@
 #include <binder/IServiceManager.h>
 #include <binder/MemoryDealer.h>
 #include <binder/ProcessState.h>
-#ifdef USE_GETBUFFERINFO
-#include <binder/MemoryBase.h>
-#endif
 #include <media/IMediaPlayerService.h>
 #include <media/stagefright/MediaBuffer.h>
 #include <media/stagefright/MediaBufferGroup.h>
@@ -54,10 +51,6 @@
 
 #include <OMX_Audio.h>
 #include <OMX_Component.h>
-
-#ifdef USE_GETBUFFERINFO
-#include <OMX_QCOMExtns.h>
-#endif
 
 #include "include/ThreadedSource.h"
 
@@ -241,9 +234,7 @@ struct OMXCodecObserver : public BnOMXObserver {
         sp<OMXCodec> codec = mTarget.promote();
 
         if (codec.get() != NULL) {
-            Mutex::Autolock autoLock(codec->mLock);
             codec->on_message(msg);
-            codec.clear();
         }
     }
 
@@ -386,16 +377,14 @@ uint32_t OMXCodec::getComponentQuirks(
         }
     }
     if (!strncmp(componentName, "OMX.qcom.7x30.video.encoder.", 28)) {
-        quirks |= kAvoidMemcopyInputRecordingFrames;
         quirks |= kRequiresFlushBeforeShutdown;
-        quirks |= kCanNotSetVideoParameters;
+        quirks |= kCanNotSetAVCParameters;
     }
     if (!strncmp(componentName, "OMX.qcom.video.decoder.", 23)) {
         quirks |= kRequiresAllocateBufferOnOutputPorts;
         quirks |= kDefersOutputBufferAllocation;
     }
     if (!strncmp(componentName, "OMX.qcom.7x30.video.decoder.", 28)) {
-        quirks |= kRequiresFlushBeforeShutdown;
         quirks |= kRequiresAllocateBufferOnInputPorts;
         quirks |= kRequiresAllocateBufferOnOutputPorts;
         quirks |= kDefersOutputBufferAllocation;
@@ -998,7 +987,7 @@ void OMXCodec::setVideoInputFormat(
 
     video_def->nFrameWidth = width;
     video_def->nFrameHeight = height;
-    video_def->xFramerate = (frameRate << 16);      // Value is used on output port for rate control
+    video_def->xFramerate = 0;      // No need for output port
     video_def->nBitrate = bitRate;  // Q16 format
     video_def->eCompressionFormat = compressionFormat;
     video_def->eColorFormat = OMX_COLOR_FormatUnused;
@@ -1159,9 +1148,7 @@ status_t OMXCodec::setupH263EncoderParameters(const sp<MetaData>& meta) {
 
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamVideoH263, &h263type, sizeof(h263type));
-    if (!(mQuirks & kCanNotSetVideoParameters)) {
-        CHECK_EQ(err, OK);
-    }
+    CHECK_EQ(err, OK);
 
     h263type.nAllowedPictureTypes =
         OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
@@ -1188,9 +1175,7 @@ status_t OMXCodec::setupH263EncoderParameters(const sp<MetaData>& meta) {
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoH263, &h263type, sizeof(h263type));
-    if (!(mQuirks & kCanNotSetVideoParameters)) {
-        CHECK_EQ(err, OK);
-    }
+    CHECK_EQ(err, OK);
 
     CHECK_EQ(setupBitRate(bitRate), OK);
     CHECK_EQ(setupErrorCorrectionParameters(), OK);
@@ -1242,9 +1227,7 @@ status_t OMXCodec::setupMPEG4EncoderParameters(const sp<MetaData>& meta) {
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoMpeg4, &mpeg4type, sizeof(mpeg4type));
-    if (!(mQuirks & kCanNotSetVideoParameters)) {
-        CHECK_EQ(err, OK);
-    }
+    CHECK_EQ(err, OK);
 
     CHECK_EQ(setupBitRate(bitRate), OK);
     CHECK_EQ(setupErrorCorrectionParameters(), OK);
@@ -1313,7 +1296,7 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoAvc, &h264type, sizeof(h264type));
-    if (!(mQuirks & kCanNotSetVideoParameters)) {
+    if (!(mQuirks & kCanNotSetAVCParameters)) {
         CHECK_EQ(err, OK);
     }
 
@@ -1620,41 +1603,6 @@ status_t OMXCodec::allocateBuffersOnPort(OMX_U32 portIndex) {
     size_t totalSize = def.nBufferCountActual * def.nBufferSize;
     mDealer[portIndex] = new MemoryDealer(totalSize, "OMXCodec");
 
-#ifdef USE_GETBUFFERINFO
-    sp<IMemoryHeap> pFrameHeap = NULL;
-    size_t alignedSize = 0;
-    size_t size = 0;
-    if (mIsEncoder && (portIndex == kPortIndexInput) &&
-            (mQuirks & kAvoidMemcopyInputRecordingFrames)) {
-        sp<IMemory> pFrame = NULL;
-        ssize_t offset = 0;
-        size_t nBuffers = 0;
-
-        mSource->getBufferInfo(pFrame, &alignedSize);
-        if (pFrame == NULL)
-            LOGE("pFrame==NULL");
-
-        pFrameHeap = pFrame->getMemory(&offset, &size);
-        nBuffers = pFrameHeap->getSize( )/alignedSize;
-
-        //update OMX with new buffer count.
-        if( nBuffers < def.nBufferCountMin || size < def.nBufferSize ) {
-            LOGE("Buffer count/size less than minimum required");
-            return UNKNOWN_ERROR;
-        }
-
-        if (nBuffers < def.nBufferCountActual) {
-            status_t err = mOMX->setParameter(
-                mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
-
-            if (err != OK) {
-                LOGE("Updating buffer count failed");
-                return err;
-            }
-        }
-    }
-#endif
-
     for (OMX_U32 i = 0; i < def.nBufferCountActual; ++i) {
         sp<IMemory> mem = mDealer[portIndex]->allocate(def.nBufferSize);
         CHECK(mem.get() != NULL);
@@ -1689,22 +1637,7 @@ status_t OMXCodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                         mNode, portIndex, mem, &buffer);
             }
         } else {
-#ifdef USE_GETBUFFERINFO
-            if(pFrameHeap != NULL && mIsEncoder && (mQuirks & kAvoidMemcopyInputRecordingFrames)) {
-                ssize_t temp_offset = i * alignedSize;
-                size_t temp_size = size;
-                sp<IMemory> pFrame = NULL;
-                sp<MemoryBase> pFrameBase = new MemoryBase(pFrameHeap, temp_offset, temp_size);
-                pFrame = pFrameBase;
-                LOGI("getParametersSync: pmem_fd = %d, base = %p, temp_offset %d,"
-                    " temp_size %d, alignedSize = %d, pointer %p, Total Size = %d", pFrameHeap->getHeapID(), pFrameHeap->base(), temp_offset,
-                    temp_size, alignedSize, pFrame->pointer(), pFrameHeap->getSize());
-                err = mOMX->useBuffer(mNode, portIndex, pFrame, &buffer);
-            } else
-#endif
-            {
-                err = mOMX->useBuffer(mNode, portIndex, mem, &buffer);
-            }
+            err = mOMX->useBuffer(mNode, portIndex, mem, &buffer);
         }
 
         if (err != OK) {
@@ -1745,6 +1678,8 @@ status_t OMXCodec::allocateBuffersOnPort(OMX_U32 portIndex) {
 }
 
 void OMXCodec::on_message(const omx_message &msg) {
+    Mutex::Autolock autoLock(mLock);
+
     switch (msg.type) {
         case omx_message::EVENT:
         {
@@ -1783,12 +1718,6 @@ void OMXCodec::on_message(const omx_message &msg) {
                 }
             }
 
-            if (mIsEncoder && (mQuirks & kAvoidMemcopyInputRecordingFrames) && (NULL != (*buffers)[i].mMediaBuffer)) {
-                CODEC_LOGV("EBD: %x %d", (*buffers)[i].mMediaBuffer, (*buffers)[i].mMediaBuffer->refcount() );
-                (*buffers)[i].mMediaBuffer->release();
-                buffers->editItemAt(i).mMediaBuffer = NULL;
-            }
-
             if (mPortStatus[kPortIndexInput] == DISABLING) {
                 CODEC_LOGV("Port is disabled, freeing buffer %p", buffer);
 
@@ -1801,7 +1730,7 @@ void OMXCodec::on_message(const omx_message &msg) {
                     && mPortStatus[kPortIndexInput] != SHUTTING_DOWN) {
                 CHECK_EQ(mPortStatus[kPortIndexInput], ENABLED);
                 drainInputBuffer(&buffers->editItemAt(i));
-            } else if ((mQuirks & kRequiresFlushBeforeShutdown) && mState == EXECUTING_TO_IDLE && mPortStatus[kPortIndexInput] == SHUTTING_DOWN) {
+            } else if (mState == EXECUTING_TO_IDLE && mPortStatus[kPortIndexInput] == SHUTTING_DOWN) {
                 if (countBuffersWeOwn(mPortBuffers[kPortIndexInput]) == mPortBuffers[kPortIndexInput].size()
                     && countBuffersWeOwn(mPortBuffers[kPortIndexOutput]) == mPortBuffers[kPortIndexOutput].size()) {
                     CODEC_LOGV("Finished emptying both ports, now completing "
@@ -1945,7 +1874,7 @@ void OMXCodec::on_message(const omx_message &msg) {
 
                 mFilledBuffers.push_back(i);
                 mBufferFilled.signal();
-            } else if ((mQuirks & kRequiresFlushBeforeShutdown) && mState == EXECUTING_TO_IDLE) {
+            } else if (mState == EXECUTING_TO_IDLE) {
                 if (countBuffersWeOwn(mPortBuffers[kPortIndexInput]) == mPortBuffers[kPortIndexInput].size()
                     && countBuffersWeOwn(mPortBuffers[kPortIndexOutput]) == mPortBuffers[kPortIndexOutput].size()) {
                     CODEC_LOGV("Finished flushing both ports, now completing "
@@ -1981,10 +1910,6 @@ void OMXCodec::onEvent(OMX_EVENTTYPE event, OMX_U32 data1, OMX_U32 data2) {
 
         case OMX_EventError:
         {
-            if (data1 && (OMX_S32)data1 == OMX_ErrorSameState) {
-                /* Don't raise fatal errors for samestate changes */
-                break;
-            }
             CODEC_LOGE("ERROR(0x%08lx, %ld)", data1, data2);
 
             setState(ERROR);
@@ -2431,13 +2356,6 @@ void OMXCodec::drainInputBuffers() {
 
     Vector<BufferInfo> *buffers = &mPortBuffers[kPortIndexInput];
     for (size_t i = 0; i < buffers->size(); ++i) {
-#ifdef USE_GETBUFFERINFO
-        //we need do this since camera holds 3 buffer + 1 is for index starts from 0
-        //if we don't do this it will be a deadlock since we will be waiting for camera to be done
-        //and camera will not give any more unless we give release
-        if (mIsEncoder && (mQuirks & kAvoidMemcopyInputRecordingFrames) && (i == 4))
-            break;
-#endif
         drainInputBuffer(&buffers->editItemAt(i));
     }
 }
@@ -2592,9 +2510,7 @@ void OMXCodec::drainInputBuffer(BufferInfo *info) {
 
         offset += srcBuffer->range_length();
 
-        if (mIsEncoder && (mQuirks & kAvoidMemcopyInputRecordingFrames)) {
-            info->mMediaBuffer = srcBuffer;
-        } else if (releaseBuffer) {
+        if (releaseBuffer) {
             srcBuffer->release();
             srcBuffer = NULL;
         }
@@ -3092,9 +3008,14 @@ status_t OMXCodec::stop() {
                 mPortStatus[kPortIndexInput] = SHUTTING_DOWN;
                 mPortStatus[kPortIndexOutput] = SHUTTING_DOWN;
 
-                status_t err =
-                    mOMX->sendCommand(mNode, OMX_CommandStateSet, OMX_StateIdle);
-                CHECK_EQ(err, OK);
+                if (countBuffersWeOwn(mPortBuffers[kPortIndexInput]) != mPortBuffers[kPortIndexInput].size()
+                        || countBuffersWeOwn(mPortBuffers[kPortIndexOutput]) != mPortBuffers[kPortIndexOutput].size()) {
+                    CODEC_LOGV("waiting for buffers to empty/fill");
+                } else {
+                    status_t err =
+                        mOMX->sendCommand(mNode, OMX_CommandStateSet, OMX_StateIdle);
+                    CHECK_EQ(err, OK);
+                }
             }
 
             while (mState != LOADED && mState != ERROR) {
@@ -3117,16 +3038,6 @@ status_t OMXCodec::stop() {
     }
 
     mSource->stop();
-
-    int i = 0;
-    while(getStrongCount() != 1) {
-        usleep(100);
-        i++;
-        if( i > 5) {
-            LOGE("Someone else, besides client, is holding the refernce. We might have trouble.");
-            break;
-        }
-    }
 
     CODEC_LOGV("stopped");
 
@@ -3728,34 +3639,8 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
 #ifdef USE_QCOM_OMX_FIX
                 //Update the Stride and Slice Height
                 //Allows creation of Renderer with correct height and width
-                if( mIsEncoder ){
-                    int32_t width, height;
-                    bool success = inputFormat->findInt32( kKeyWidth, &width ) &&
-                        inputFormat->findInt32( kKeyHeight, &height);
-                    CHECK( success );
-                    mOutputFormat->setInt32(kKeyWidth, width );
-                    mOutputFormat->setInt32(kKeyHeight, height );
-
-#ifdef USE_GETBUFFERINFO
-                    /* Tell the encoder to use our supplied pmem on
-                       the input buffer, via vendor-specific useBuffer */
-                    OMX_QCOM_PARAM_PORTDEFINITIONTYPE portDefn;
-                    InitOMXParams(&portDefn);
-                    portDefn.nPortIndex = kPortIndexInput;
-                    portDefn.nMemRegion = OMX_QCOM_MemRegionEBI1;
-
-                    err = mOMX->setParameter( mNode,
-                        (OMX_INDEXTYPE) OMX_QcomIndexPortDefn,
-                        &portDefn, sizeof(portDefn) );
-                    CHECK_EQ(err, OK);
-#endif
-                }
-                else {
-                    LOGV("video_def->nStride = %d, video_def->nSliceHeight = %d", video_def->nStride,
-                            video_def->nSliceHeight );
-                    mOutputFormat->setInt32(kKeyWidth, video_def->nStride);
-                    mOutputFormat->setInt32(kKeyHeight, video_def->nSliceHeight);
-                }
+                mOutputFormat->setInt32(kKeyWidth, video_def->nStride);
+                mOutputFormat->setInt32(kKeyHeight, video_def->nSliceHeight);
 #else
                 //Some hardware expects the old behavior
                 mOutputFormat->setInt32(kKeyWidth, video_def->nFrameWidth);
