@@ -2658,6 +2658,9 @@ public final class Settings {
          * @hide
          */
         public static final String WIFI_NUM_ALLOWED_CHANNELS = "wifi_num_allowed_channels";
+	
+	/** Add Launcher as constant **/
+	public static final String LAUNCHER_2_PACKAGE = "com.android.launcher";
 
         /**
          * When the number of open networks exceeds this number, the
