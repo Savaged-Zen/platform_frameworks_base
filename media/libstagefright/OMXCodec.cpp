@@ -3726,6 +3726,7 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
                     mOutputFormat->setInt32(kKeyWidth, width );
                     mOutputFormat->setInt32(kKeyHeight, height );
 
+#ifdef USE_GETBUFFERINFO
                     OMX_QCOM_PARAM_PORTDEFINITIONTYPE portDefn;
                     InitOMXParams(&portDefn);
                     portDefn.nPortIndex = kPortIndexInput;
@@ -3735,13 +3736,14 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
                         (OMX_INDEXTYPE) OMX_QcomIndexPortDefn,
                         &portDefn, sizeof(portDefn) );
                     CHECK_EQ(err, OK);
-                    }
-                    else {
-                        LOGV("video_def->nStride = %d, video_def->nSliceHeight = %d", video_def->nStride,
-                            video_def->nSliceHeight )
-                        mOutputFormat->setInt32(kKeyWidth, video_def->nStride);
-                         mOutputFormat->setInt32(kKeyHeight, video_def->nSliceHeight);
-                   }
+#endif
+                }
+                else {
+                    LOGV("video_def->nStride = %d, video_def->nSliceHeight = %d", video_def->nStride,
+                        video_def->nSliceHeight );
+                    mOutputFormat->setInt32(kKeyWidth, video_def->nStride);
+                    mOutputFormat->setInt32(kKeyHeight, video_def->nSliceHeight);
+                }
 #else
                 //Some hardware expects the old behavior
                 mOutputFormat->setInt32(kKeyWidth, video_def->nFrameWidth);
