@@ -2130,14 +2130,7 @@ public final class Settings {
         @Deprecated
         public static final String WIFI_WATCHDOG_PING_TIMEOUT_MS =
             Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS;
-
-wq        /** Contracnts for SZParts  **/
-        public static final String SCREEN_SETTINGS = "NUM_SCREENS";
-
-        public static final String LAUNCHER_2_PACKAGE = "com.android.launcher";
-
-
-	}
+    }
 
     /**
      * Secure system settings, containing system preferences that applications
@@ -2765,6 +2758,7 @@ wq        /** Contracnts for SZParts  **/
          * A comma-separated list of SSIDs for which the Wi-Fi watchdog should be enabled.
          */
         public static final String WIFI_WATCHDOG_WATCH_LIST = "wifi_watchdog_watch_list";
+
         /**
          * The number of pings to test if an access point is a good connection.
          */
