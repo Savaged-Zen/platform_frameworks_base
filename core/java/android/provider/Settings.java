@@ -2761,7 +2761,10 @@ public final class Settings {
          * A comma-separated list of SSIDs for which the Wi-Fi watchdog should be enabled.
          */
         public static final String WIFI_WATCHDOG_WATCH_LIST = "wifi_watchdog_watch_list";
-
+	/**
+	 * Launcher Settings
+	**/
+	public static final String SCREEN_SETTINGS = "NUM_SCREENS";
         /**
          * The number of pings to test if an access point is a good connection.
          */
