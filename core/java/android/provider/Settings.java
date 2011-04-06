@@ -1,4 +1,4 @@
-/*
+/*Secure.WIFI_W
  * Copyright (C) 2006 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -2130,7 +2130,13 @@ public final class Settings {
         @Deprecated
         public static final String WIFI_WATCHDOG_PING_TIMEOUT_MS =
             Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS;
-    }
+	
+	/** Contracnts for SZParts  **/		
+        public static final String SCREEN_SETTINGS = "NUM_SCREENS";		
+
+        public static final String LAUNCHER_2_PACKAGE = "com.android.launcher";    
+
+     }
 
     /**
      * Secure system settings, containing system preferences that applications
