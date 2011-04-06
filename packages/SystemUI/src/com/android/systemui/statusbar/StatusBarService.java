@@ -16,6 +16,7 @@
 
 package com.android.systemui.statusbar;
 
+import static android.provider.Settings.System.USE_SCREENOFF_ANIM;
 import android.app.Service;
 import com.android.internal.statusbar.IStatusBar;
 import com.android.internal.statusbar.IStatusBarService;
@@ -48,6 +49,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Slog;
@@ -111,6 +113,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
     LinearLayout mStatusIcons;
 
     // expanded notifications
+    private boolean mUseTransparentStatusBar = true;
     Dialog mExpandedDialog;
     ExpandedView mExpandedView;
     WindowManager.LayoutParams mExpandedParams;
@@ -271,7 +274,14 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         sb.mService = this;
 
         // figure out which pixel-format to use for the status bar.
-        mPixelFormat = PixelFormat.TRANSLUCENT;
+        mUseTransparentStatusBar = (Settings.System.getInt(getApplicationContext().getContentResolver(), Settings.System.USE_TRANSPARENT_STATUSBAR, 1) == 1);
+        if (mUseTransparentStatusBar) {
+          pixelFormat = PixelFormat.TRANSLUCENT;
+
+        } else {
+          pixelFormat = PixelFormat.RGBX_8888;
+        }
+
         Drawable bg = sb.getBackground();
         if (bg != null) {
             mPixelFormat = bg.getOpacity();

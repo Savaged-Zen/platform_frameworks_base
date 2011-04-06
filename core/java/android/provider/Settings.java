@@ -2136,6 +2136,7 @@ public final class Settings {
 
         public static final String LAUNCHER_2_PACKAGE = "com.android.launcher";    
 
+	public static final String USE_TRANSPARENT_STATUSBAR = "use_transparent_statusbar";
      }
 
     /**
