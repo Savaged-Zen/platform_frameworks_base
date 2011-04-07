@@ -273,6 +273,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         sb.mService = this;
 
         // figure out which pixel-format to use for the status bar.
+        mPixelFormat = PixelFormat.TRANSLUCENT;
         Drawable bg = sb.getBackground();
         if (bg != null) {
             mPixelFormat = bg.getOpacity();
@@ -1229,7 +1230,7 @@ public class StatusBarService extends Service implements CommandQueue.Callbacks 
         Drawable bg;
 
         /// ---------- Tracking View --------------
-        pixelFormat = PixelFormat.RGBX_8888;
+        pixelFormat = PixelFormat.TRANSLUCENT;
         bg = mTrackingView.getBackground();
         if (bg != null) {
             pixelFormat = bg.getOpacity();
