@@ -938,9 +938,11 @@ public class StatusBarPolicy {
             // signal, its better to show 0 bars to the user in such cases.
             // asu = 99 is a special case, where the signal strength is unknown.
             if (asu <= 2 || asu == 99) iconLevel = 0;
-            else if (asu >= 12) iconLevel = 4;
-            else if (asu >= 8)  iconLevel = 3;
-            else if (asu >= 5)  iconLevel = 2;
+            else if (asu >= 12) iconLevel = 6;
+            else if (asu >= 10) iconLevel = 5;
+            else if (asu >= 8) iconLevel = 4;
+            else if (asu >= 6)  iconLevel = 3;
+            else if (asu >= 4)  iconLevel = 2;
             else iconLevel = 1;
 
             // Though mPhone is a Manager, this call is not an IPC
@@ -973,17 +975,45 @@ public class StatusBarPolicy {
         final int cdmaEcio = mSignalStrength.getCdmaEcio();
         int levelDbm = 0;
         int levelEcio = 0;
+        
+       /*
+         * HTC's signal to icon
 
-        if (cdmaDbm >= -75) levelDbm = 4;
-        else if (cdmaDbm >= -85) levelDbm = 3;
-        else if (cdmaDbm >= -95) levelDbm = 2;
-        else if (cdmaDbm >= -100) levelDbm = 1;
+			0 -> anything worse than -110
+			1 -> -110
+			2 -> -105
+			3 -> -100
+			4 -> -95
+			5 -> -85
+			6 -> -75
+         */
+
+        if (cdmaDbm >= -75) levelDbm = 6;
+        else if (cdmaDbm >= -85) levelDbm = 5;
+        else if (cdmaDbm >= -95) levelDbm = 4;
+        else if (cdmaDbm >= -100) levelDbm = 3;
+        else if (cdmaDbm >= -105) levelDbm = 2;
+        else if (cdmaDbm >= -110) levelDbm = 1;
         else levelDbm = 0;
 
+        /*
+         * HTC's signal to icon
+
+			0 -> anything worse than -150
+			1 -> -150
+			2 -> -140
+			3 -> -130
+			4 -> -120
+			5 -> -110
+			6 -> -90
+         */
+
         // Ec/Io are in dB*10
-        if (cdmaEcio >= -90) levelEcio = 4;
-        else if (cdmaEcio >= -110) levelEcio = 3;
-        else if (cdmaEcio >= -130) levelEcio = 2;
+        if (cdmaEcio >= -90) levelEcio = 6;
+        else if (cdmaEcio >= -110) levelEcio = 5;
+        else if (cdmaEcio >= -120) levelEcio = 4;
+        else if (cdmaEcio >= -130) levelEcio = 3;
+        else if (cdmaEcio >= -140) levelEcio = 2;
         else if (cdmaEcio >= -150) levelEcio = 1;
         else levelEcio = 0;
 
@@ -996,14 +1026,18 @@ public class StatusBarPolicy {
         int levelEvdoDbm = 0;
         int levelEvdoSnr = 0;
 
-        if (evdoDbm >= -65) levelEvdoDbm = 4;
-        else if (evdoDbm >= -75) levelEvdoDbm = 3;
-        else if (evdoDbm >= -90) levelEvdoDbm = 2;
+        if (evdoDbm >= -75) levelEvdoDbm = 6;
+        else if (evdoDbm >= -85) levelEvdoDbm = 5;
+        else if (evdoDbm >= -90) levelEvdoDbm = 4;
+        else if (evdoDbm >= -95) levelEvdoDbm = 3;
+        else if (evdoDbm >= -100) levelEvdoDbm = 2;
         else if (evdoDbm >= -105) levelEvdoDbm = 1;
         else levelEvdoDbm = 0;
 
-        if (evdoSnr >= 7) levelEvdoSnr = 4;
-        else if (evdoSnr >= 5) levelEvdoSnr = 3;
+        if (evdoSnr >= 8) levelEvdoSnr = 6;
+        else if (evdoSnr >= 6) levelEvdoSnr = 5;
+        else if (evdoSnr >= 5) levelEvdoSnr = 4;
+        else if (evdoSnr >= 4) levelEvdoSnr = 3;
         else if (evdoSnr >= 3) levelEvdoSnr = 2;
         else if (evdoSnr >= 1) levelEvdoSnr = 1;
         else levelEvdoSnr = 0;
