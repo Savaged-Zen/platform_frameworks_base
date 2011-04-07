@@ -127,12 +127,16 @@ public class StatusBarPolicy {
           R.drawable.stat_sys_signal_1,
           R.drawable.stat_sys_signal_2,
           R.drawable.stat_sys_signal_3,
-          R.drawable.stat_sys_signal_4 },
+          R.drawable.stat_sys_signal_4,
+          R.drawable.stat_sys_signal_5,
+          R.drawable.stat_sys_signal_6 },
         { R.drawable.stat_sys_signal_0_fully,
           R.drawable.stat_sys_signal_1_fully,
           R.drawable.stat_sys_signal_2_fully,
           R.drawable.stat_sys_signal_3_fully,
-          R.drawable.stat_sys_signal_4_fully }
+          R.drawable.stat_sys_signal_4_fully,
+          R.drawable.stat_sys_signal_5_fully,
+          R.drawable.stat_sys_signal_6_fully, }
     };
     private static final int[][] sSignalImages_r = {
         { R.drawable.stat_sys_r_signal_0,
