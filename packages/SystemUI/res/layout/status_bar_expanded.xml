@@ -70,12 +70,12 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="1dp"
                 android:textSize="14sp"
-                android:textColor="#ff000000"
+                android:textColor="#ffdfdfdf"
                 android:text="@string/status_bar_clear_all_button"
                 style="?android:attr/buttonStyle"
                 android:paddingLeft="15dp"
                 android:paddingRight="15dp"
-                android:background="@android:drawable/btn_default_small"
+                android:background="#cc414141"
             />
         </LinearLayout>
     </LinearLayout>
