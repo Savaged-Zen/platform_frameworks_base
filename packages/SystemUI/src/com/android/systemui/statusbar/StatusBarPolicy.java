@@ -1277,7 +1277,7 @@ public class StatusBarPolicy {
         } else if (action.equals(WimaxConstants.RSSI_CHANGED_ACTION)) {
 
             int rssi = intent.getIntExtra(WimaxConstants.EXTRA_NEW_RSSI_LEVEL, -200);
-            int newSignalLevel = mWimaxSettingsHelper.calculateSignalLevel(rssi, 4);
+            int newSignalLevel = rssi;
 		
             int iconId;
 
