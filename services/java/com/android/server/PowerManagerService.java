@@ -64,8 +64,8 @@ import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
-import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_ON;
-import static android.provider.Settings.System.ELECTRON_BEAM_ANIMATION_OFF;
+import static android.provider.Settings.System.USE_SCREENON_ANIM;
+import static android.provider.Settings.System.USE_SCREENOFF_ANIM;
 import static android.provider.Settings.System.STAY_ON_WHILE_PLUGGED_IN;
 import static android.provider.Settings.System.WINDOW_ANIMATION_SCALE;
 import static android.provider.Settings.System.TRANSITION_ANIMATION_SCALE;
@@ -148,8 +148,8 @@ class PowerManagerService extends IPowerManager.Stub
     boolean mAnimateScreenLights = true;
 
     //electron beam animation control
-    boolean mElectronBeamAnimationOn = false;
-    boolean mElectronBeamAnimationOff = false;
+    boolean mUseScreenOnAnim = false;
+    boolean mUseScreenOffAnim = false;
 
     static final int ANIM_STEPS = 60/4;
     // Slower animation for autobrightness changes
@@ -465,18 +465,16 @@ class PowerManagerService extends IPowerManager.Stub
                 // recalculate everything
                 setScreenOffTimeoutsLocked();
 
-                mElectronBeamAnimationOn = Settings.System.getInt(mContext.getContentResolver(),
-                                                           ELECTRON_BEAM_ANIMATION_ON, 0) == 1;
-                mElectronBeamAnimationOff = Settings.System.getInt(mContext.getContentResolver(),
-                                                            ELECTRON_BEAM_ANIMATION_OFF, 1) == 1;
+                mUseScreenOnAnim = Settings.System.getInt(mContext.getContentResolver(), USE_SCREENON_ANIM, 0) == 1;
+                mUseScreenOffAnim = Settings.System.getInt(mContext.getContentResolver(),USE_SCREENOFF_ANIM, 1) == 1;
 
                 final float windowScale = getFloat(WINDOW_ANIMATION_SCALE, 1.0f);
                 final float transitionScale = getFloat(TRANSITION_ANIMATION_SCALE, 1.0f);
                 mAnimationSetting = 0;
-                if (windowScale > 0.5f && mElectronBeamAnimationOff) {
+                if (windowScale > 0.5f && mUseScreenOffAnim) {
                     mAnimationSetting |= ANIM_SETTING_OFF;
                 }
-                if (transitionScale > 0.5f && mElectronBeamAnimationOff) {
+                if (transitionScale > 0.5f && mUseScreenOnAnim) {
                     mAnimationSetting |= ANIM_SETTING_ON;
                 }
             }
