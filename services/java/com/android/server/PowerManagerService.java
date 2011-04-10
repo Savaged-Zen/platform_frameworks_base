@@ -1,4 +1,4 @@
-/*
+/m*
  * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -2055,7 +2055,11 @@ class PowerManagerService extends IPowerManager.Stub
         }
 
         public void run() {
-            if (mAnimateScreenLights) {
+            if (mAnimateScreenLights ||
+                    (!mAnimateScreenLights && Settings.System.getInt(mContext.getContentResolver(),
+                            USE_SCREENOFF_ANIM,
+                            mContext.getResources().getBoolean(
+                                    com.android.internal.R.bool.config_enableScreenOffAnimation) ? 1 : 0) == 0)) {
                 synchronized (mLocks) {
                     long now = SystemClock.uptimeMillis();
                     boolean more = mScreenBrightness.stepLocked();
