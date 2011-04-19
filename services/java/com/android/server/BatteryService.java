@@ -31,6 +31,7 @@ import android.os.IBinder;
 import android.os.DropBoxManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.os.SystemClock;
 import android.os.UEventObserver;
 import android.provider.Settings;
@@ -439,11 +440,21 @@ class BatteryService extends Binder {
 
     private final int getIcon(int level) {
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
-            return com.android.internal.R.drawable.stat_sys_battery_charge;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.THEME_COMPATIBILITY_BATTERY, 0) == 0) { // 100 battery
+                return com.android.internal.R.drawable.stat_sys_battery_charge_100;
+            } else {
+                return com.android.internal.R.drawable.stat_sys_battery_charge_stock; // Stock battery
+            }
         } else if (mBatteryStatus == BatteryManager.BATTERY_STATUS_DISCHARGING ||
                 mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
                 mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
-            return com.android.internal.R.drawable.stat_sys_battery;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.THEME_COMPATIBILITY_BATTERY, 0) == 0) {
+                return com.android.internal.R.drawable.stat_sys_battery_100; // 100 battery
+            } else {
+                return com.android.internal.R.drawable.stat_sys_battery_stock; // Old battery
+            }
         } else {
             return com.android.internal.R.drawable.stat_sys_battery_unknown;
         }
