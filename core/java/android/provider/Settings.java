@@ -1244,6 +1244,16 @@ public final class Settings {
             "bluetooth_discoverability_timeout";
 
         /**
+         * Theme compatibility mode: Battery
+         */
+        public static final String THEME_COMPATIBILITY_BATTERY = "theme_compatibility_battery";
+
+        /**
+         * Theme compatibility mode: Four bar signal
+         */
+        public static final String THEME_COMPATIBILITY_SIGNAL = "theme_compatibility_signal";
+
+        /**
          * @deprecated Use {@link android.provider.Settings.Secure#LOCK_PATTERN_ENABLED}
          * instead
          */
