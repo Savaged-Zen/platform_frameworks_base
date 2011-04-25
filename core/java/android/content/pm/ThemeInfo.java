@@ -57,7 +57,7 @@ public final class ThemeInfo extends BaseThemeInfo {
         COPYRIGHT_INDEX,
         RINGTONE_NAME_INDEX,
         NOTIFICATION_RINGTONE_NAME_INDEX,
-        STYLE_INDEX,
+        STYLE_INDEX;
 
         public static AttributeIndex get(int ordinal) {
             return values()[ordinal];
