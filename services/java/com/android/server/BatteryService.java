@@ -441,7 +441,7 @@ class BatteryService extends Binder {
     private final int getIcon(int level) {
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
             if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.THEME_COMPATIBILITY_BATTERY, 0) == 0) { // 100 battery
+                    Settings.System.THEME_COMPATIBILITY_BATTERY, 1) == 1) { // 100 battery
                 return com.android.internal.R.drawable.stat_sys_battery_charge_100;
             } else {
                 return com.android.internal.R.drawable.stat_sys_battery_charge_stock; // Stock battery
@@ -450,7 +450,7 @@ class BatteryService extends Binder {
                 mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
                 mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
             if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.THEME_COMPATIBILITY_BATTERY, 0) == 0) {
+                    Settings.System.THEME_COMPATIBILITY_BATTERY, 1) == 1) {
                 return com.android.internal.R.drawable.stat_sys_battery_100; // 100 battery
             } else {
                 return com.android.internal.R.drawable.stat_sys_battery_stock; // Old battery

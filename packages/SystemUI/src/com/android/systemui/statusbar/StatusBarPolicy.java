@@ -986,7 +986,7 @@ public class StatusBarPolicy {
         int levelEcio = 0;
         
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.THEME_COMPATIBILITY_SIGNAL, 0) == 0) { // Six bar
+                Settings.System.THEME_COMPATIBILITY_SIGNAL, 1) == 1) { // Six bar
            /*
              * HTC's signal to icon
 
@@ -1052,7 +1052,7 @@ public class StatusBarPolicy {
         int levelEvdoSnr = 0;
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.THEME_COMPATIBILITY_SIGNAL, 0) == 0) { // Six bar
+                Settings.System.THEME_COMPATIBILITY_SIGNAL, 1) == 1) { // Six bar
             if (evdoDbm >= -75) levelEvdoDbm = 6;
             else if (evdoDbm >= -85) levelEvdoDbm = 5;
             else if (evdoDbm >= -90) levelEvdoDbm = 4;
