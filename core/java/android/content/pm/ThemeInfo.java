@@ -12,9 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ package android.content.pm; import java.util.HashMap; import java.util.Map; import org.xmlpull.v1.XmlPullParserException; import 
-org.xmlpull.v1.XmlPullParser; import android.os.Parcel; import android.os.Parcelable; import android.util.AttributeSet; import 
-android.content.res.Resources; /**
+ */ 
+
+
+package android.content.pm;
+
+import java.util.HashMap;
+import java.util.Map;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParser;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.AttributeSet;
+import android.content.res.Resources;
+
+
+ /**
  * Overall information about "theme" package.  This corresponds
  * to the information collected from AndroidManifest.xml (theme tag).
  *
@@ -29,7 +42,9 @@ android.content.res.Resources; /**
  * />
  *
  * @hide
- */ public final class ThemeInfo extends BaseThemeInfo {
+ */ 
+
+public final class ThemeInfo extends BaseThemeInfo {
     private enum AttributeIndex {
         THEME_PACKAGE_INDEX,
         PREVIEW_INDEX,
