@@ -66,6 +66,9 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Random;
+import android.graphics.Color;
 
 /** {@hide} */
 public class NotificationManagerService extends INotificationManager.Stub
