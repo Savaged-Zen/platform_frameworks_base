@@ -27,6 +27,8 @@ import android.content.res.Resources;
  */
 public class BaseThemeInfo implements Parcelable {
 
+    public String hasModdedBattery;
+    public String hasModdedSignal;
     /**
      * Wallpaper drawable.
      *
@@ -192,6 +194,8 @@ public class BaseThemeInfo implements Parcelable {
         dest.writeString(soundPackName);
         dest.writeString(themeStyleName);
         dest.writeInt(previewResourceId);
+        dest.writeString(hasModdedBattery);
+        dest.writeString(hasModdedSignal);
     }
 
     /** @hide */
@@ -234,6 +238,8 @@ public class BaseThemeInfo implements Parcelable {
         soundPackName = source.readString();
         themeStyleName = source.readString();
         previewResourceId = source.readInt();
+        hasModdedBattery = source.readString();
+        hasModdedSignal = source.readString();
     }
 
     protected void changeDrmFlagIfNeeded(String resourcePath) {
