@@ -143,7 +143,7 @@ public class NotificationManagerService extends INotificationManager.Stub
     // Don't vibrate.
     private boolean mQuietHoursStill = true;
     // Dim LED if hardware supports it.
-    private boolean mQuietHoursDim = true
+    private boolean mQuietHoursDim = true;
 
     private static final int BATTERY_LOW_ARGB = 0xFFFF0000; // Charging Low - red solid on
     private static final int BATTERY_MEDIUM_ARGB = 0xFFFFFF00;    // Charging - orange solid on
