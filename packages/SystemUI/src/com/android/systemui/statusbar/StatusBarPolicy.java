@@ -939,7 +939,7 @@ public class StatusBarPolicy {
             // signal, its better to show 0 bars to the user in such cases.
             // asu = 99 is a special case, where the signal strength is unknown.
             if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.THEME_COMPATIBILITY_SIGNAL, 0) == 0) { // Six bar
+                    Settings.System.THEME_COMPATIBILITY_SIGNAL, 1) == 1) { // Six bar
                 if (asu <= 2 || asu == 99) iconLevel = 0;
                 else if (asu >= 12) iconLevel = 6;
                 else if (asu >= 10) iconLevel = 5;
