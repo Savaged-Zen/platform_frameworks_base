@@ -29,6 +29,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import android.content.res.Resources;
+
 public class PduParser {
     /**
      *  The next are WAP values defined in WSP specification.
@@ -162,13 +164,6 @@ public class PduParser {
                     // The MMS content type must be "application/vnd.wap.multipart.mixed"
                     // or "application/vnd.wap.multipart.related"
                     // or "application/vnd.wap.multipart.alternative"
-                    return retrieveConf;
-                } else if (ctTypeStr.equals(ContentType.MULTIPART_ALTERNATIVE)) {
-                    // "application/vnd.wap.multipart.alternative"
-                    // should take only the first part.
-                    PduPart firstPart = mBody.getPart(0);
-                    mBody.removeAll();
-                    mBody.addPart(0, firstPart);
                     return retrieveConf;
                 }
                 return null;
@@ -1598,6 +1593,7 @@ public class PduParser {
                         if (thisStartPos - thisEndPos < len) {
                             value = pduDataStream.read();
                             if (value == PduPart.P_FILENAME) { //filename is text-string
+                                    part.setFilename(parseWapString(pduDataStream
                                 part.setFilename(parseWapString(pduDataStream, TYPE_TEXT_STRING));
                             }
 
@@ -1612,6 +1608,7 @@ public class PduParser {
 
                         tempPos = pduDataStream.available();
                         lastLen = length - (startPos - tempPos);
+                        }
                         break;
                     default:
                         if (LOCAL_LOGV) {

@@ -1,4 +1,4 @@
-/*Secure.WIFI_W
+/*
  * Copyright (C) 2006 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -2733,6 +2733,14 @@ public final class Settings {
                 "wifi_networks_available_repeat_delay";
 
         /**
+         * Whether to nofity the user of WiMAX network.
+         * If WiMAX is connected or disconnected, we will put this notification up.
+         * @hide
+         */
+        public static final String WIMAX_NETWORKS_AVAILABLE_NOTIFICATION_ON =
+                "wimax_networks_available_notification_on";
+
+        /**
          * The number of radio channels that are allowed in the local
          * 802.11 regulatory domain.
          * @hide
@@ -2869,25 +2877,10 @@ public final class Settings {
             "wifi_mobile_data_transition_wakelock_timeout_ms";
 
         /**
-         * Whether the Wimax should be on.  Only the Wimax service should touch this.
+         * Whether the Wimax should be on.  Only the WiMAX service should touch this.
+         * @hide
          */
         public static final String WIMAX_ON = "wimax_on";
-
-        /**
-         * Whether to auto connect to the last connected network.
-         * <p>
-         * If not connected and the scan results have the last connected network
-         * available then connect to the network.
-         * see {@link android.provider.Settings.Secure#WIMAX_LAST_CONNECTED_NETWORK}.
-         */
-        public static final String WIMAX_AUTO_CONNECT_ON =
-                "wimax_auto_connect_on";
-
-        /**
-         * The last connected wimax network name.
-         */
-        public static final String WIMAX_LAST_CONNECTED_NETWORK =
-                "wimax_last_connected_network";
 
         /**
          * Whether background data usage is allowed by the user. See
