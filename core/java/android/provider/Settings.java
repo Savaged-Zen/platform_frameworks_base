@@ -1798,6 +1798,16 @@ public final class Settings {
         public static final String QUIET_HOURS_DIM = "quiet_hours_dim";
 
         /**
+         * Quiet Hours for LED Notifications
+         */
+        public static final String QUIET_HOURS_LED_NOTIFICATION = "quiet_hours_led_notification";
+
+        /**
+         * Quiet Hours for LED Buttons
+         */
+        public static final String QUIET_HOURS_LED_BUTTON = "quiet_hours_led_button";
+
+        /**
          * Receive incoming SIP calls?
          * 0 = no
          * 1 = yes
