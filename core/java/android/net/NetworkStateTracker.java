@@ -166,6 +166,7 @@ public abstract class NetworkStateTracker extends Handler {
                 Log.d(TAG, "addDefaultRoute for " + mNetworkInfo.getTypeName() +
                         " (" + mInterfaceName + "), GatewayAddr=" + mDefaultGatewayAddr);
             }
+            NetworkUtils.addHostRoute(mInterfaceName, mDefaultGatewayAddr);
             NetworkUtils.setDefaultRoute(mInterfaceName, mDefaultGatewayAddr);
         }
     }
@@ -419,4 +420,7 @@ public abstract class NetworkStateTracker extends Handler {
     public void interpretScanResultsAvailable() {
     }
 
+    public String getInterfaceName() {
+        return mInterfaceName;
+    }
 }
