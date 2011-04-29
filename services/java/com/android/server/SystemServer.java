@@ -18,7 +18,6 @@
 package com.android.server;
 
 import com.android.server.am.ActivityManagerService;
-import com.android.server.usb.UsbService;
 import com.android.internal.app.ShutdownThread;
 import com.android.internal.os.BinderInternal;
 import com.android.internal.os.SamplingProfilerIntegration;
@@ -125,7 +124,7 @@ class ServerThread extends Thread {
         BluetoothA2dpService bluetoothA2dp = null;
         HeadsetObserver headset = null;
         DockObserver dock = null;
-        UsbService usb = null;
+        UsbObserver usb = null;
         UiModeManagerService uiMode = null;
         RecognitionManagerService recognition = null;
         ThrottleService throttle = null;
@@ -400,12 +399,11 @@ class ServerThread extends Thread {
             }
 
             try {
-                Slog.i(TAG, "USB Service");
+                Slog.i(TAG, "USB Observer");
                 // Listen for USB changes
-                usb = new UsbService(context);
-                ServiceManager.addService(Context.USB_SERVICE, usb);
+                usb = new UsbObserver(context);
             } catch (Throwable e) {
-                Slog.e(TAG, "Failure starting UsbService", e);
+                Slog.e(TAG, "Failure starting UsbObserver", e);
             }
 
             try {
@@ -513,7 +511,7 @@ class ServerThread extends Thread {
         final BatteryService batteryF = battery;
         final ConnectivityService connectivityF = connectivity;
         final DockObserver dockF = dock;
-        final UsbService usbF = usb;
+        final UsbObserver usbF = usb;
         final ThrottleService throttleF = throttle;
         final UiModeManagerService uiModeF = uiMode;
         final AppWidgetService appWidgetF = appWidget;

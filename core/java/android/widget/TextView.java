@@ -301,8 +301,6 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
     // Set when this TextView gained focus with some text selected. Will start selection mode.
     private boolean mCreatedWithASelection = false;
 
-    private boolean mNoContextMenuOnUp = false;
-
     /*
      * Kick-start the font cache for the zygote process (to pay the cost of
      * initializing freetype for our default font only once).
@@ -6779,9 +6777,8 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                 // Restore previous selection
                 Selection.setSelection((Spannable)mText, prevStart, prevEnd);
 
-                // Tapping inside the selection displays the cut/copy/paste context menu, unless
-                // this is a double tap that should simply trigger text selection mode.
-                if (!mNoContextMenuOnUp) showContextMenu();
+                // Tapping inside the selection displays the cut/copy/paste context menu
+                showContextMenu();
             } else {
                 // Tapping outside stops selection mode, if any
                 stopTextSelectionMode();
@@ -6839,7 +6836,7 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
             mScrolled = false;
         }
 
-        boolean result = super.onTouchEvent(event);
+        final boolean superResult = super.onTouchEvent(event);
 
         /*
          * Don't handle the release after a long press, because it will
@@ -6848,8 +6845,10 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
          */
         if (mEatTouchRelease && action == MotionEvent.ACTION_UP) {
             mEatTouchRelease = false;
-        } else if ((mMovement != null || onCheckIsTextEditor()) && mText instanceof Spannable &&
-                mLayout != null) {
+            return superResult;
+        }
+
+        if ((mMovement != null || onCheckIsTextEditor()) && mText instanceof Spannable && mLayout != null) {
             boolean handled = false;
 
             // Save previous selection, in case this event is used to show the IME.
@@ -6890,14 +6889,12 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                 }
             }
 
-            if (handled) result = true;
+            if (handled) {
+                return true;
+            }
         }
 
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-            mNoContextMenuOnUp = false;
-        }
-
-        return result;
+        return superResult;
     }
 
     private void prepareCursorControllers() {
@@ -8193,8 +8190,9 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
                             final int slopSquared = doubleTapSlop * doubleTapSlop;
                             if (distanceSquared < slopSquared) {
                                 startTextSelectionMode();
-                                // prevents onTapUpEvent from opening a context menu with cut/copy
-                                mNoContextMenuOnUp = true;
+                                // Hacky: onTapUpEvent will open a context menu with cut/copy
+                                // Prevent this by hiding handles which will be revived instead.
+                                hide();
                             }
                         }
                         mPreviousTapPositionX = x;

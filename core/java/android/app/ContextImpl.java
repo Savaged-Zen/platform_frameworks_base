@@ -67,8 +67,6 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorManager;
-import android.hardware.usb.IUsbManager;
-import android.hardware.usb.UsbManager;
 import android.location.ILocationManager;
 import android.location.LocationManager;
 import android.media.AudioManager;
@@ -201,7 +199,6 @@ class ContextImpl extends Context {
     private SearchManager mSearchManager = null;
     private SensorManager mSensorManager = null;
     private StorageManager mStorageManager = null;
-    private UsbManager mUsbManager = null;
     private Vibrator mVibrator = null;
     private LayoutInflater mLayoutInflater = null;
     private StatusBarManager mStatusBarManager = null;
@@ -981,8 +978,6 @@ class ContextImpl extends Context {
             return getSensorManager();
         } else if (STORAGE_SERVICE.equals(name)) {
             return getStorageManager();
-        } else if (USB_SERVICE.equals(name)) {
-            return getUsbManager();
         } else if (VIBRATOR_SERVICE.equals(name)) {
             return getVibrator();
         } else if (STATUS_BAR_SERVICE.equals(name)) {
@@ -1205,17 +1200,6 @@ class ContextImpl extends Context {
             }
         }
         return mStorageManager;
-    }
-
-    private UsbManager getUsbManager() {
-        synchronized (mSync) {
-            if (mUsbManager == null) {
-                IBinder b = ServiceManager.getService(USB_SERVICE);
-                IUsbManager service = IUsbManager.Stub.asInterface(b);
-                mUsbManager = new UsbManager(this, service);
-            }
-        }
-        return mUsbManager;
     }
 
     private Vibrator getVibrator() {
