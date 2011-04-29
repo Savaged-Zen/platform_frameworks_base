@@ -441,7 +441,7 @@ class BatteryService extends Binder {
     private final int getIcon(int level) {
         boolean mThemeCompatibility;
         mThemeCompatibility = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.THEME_COMPATIBILITY_SIGNAL, 1) == 1;
+                Settings.System.THEME_COMPATIBILITY_BATTERY, 1) == 1;
 
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
             if (mThemeCompatibility) { // 100 battery
