@@ -735,12 +735,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             upgradeVersion = 57;
         }
         // *** Remember to update DATABASE_VERSION above!
-        
 
-	 if (upgradeVersion == 57) {
+        if (upgradeVersion == 57) {
             /* This upgrade is for the Wimax framework */
             db.beginTransaction();
-
             SQLiteStatement stmt = null;
 
             db.beginTransaction();
@@ -762,7 +760,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 db.endTransaction();
                 if (stmt != null) stmt.close();
             }
-           upgradeVersion = 58;
+            upgradeVersion = 58;
         }
          // *** Remember to update DATABASE_VERSION above!
 
@@ -1197,11 +1195,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Set the preferred cdma subscription to 0 = Subscription from RUIM, when available
             loadSetting(stmt, Settings.Secure.PREFERRED_CDMA_SUBSCRIPTION,
                     RILConstants.PREFERRED_CDMA_SUBSCRIPTION);
+    
             // WIMAX off, auto connect off
             loadBooleanSetting(stmt, Settings.Secure.WIMAX_ON, R.bool.def_wimax_on);
             loadBooleanSetting(stmt, Settings.Secure.WIMAX_AUTO_CONNECT_ON, 
                     R.bool.def_wimax_auto_connect_on);
-    
+
             // Don't do this.  The SystemServer will initialize ADB_ENABLED from a
             // persistent system property instead.
             //loadSetting(stmt, Settings.Secure.ADB_ENABLED, 0);
