@@ -2882,6 +2882,22 @@ public final class Settings {
          */
         public static final String WIMAX_ON = "wimax_on";
 
+	/**
+         * Whether to auto connect to the last connected network.
+         * <p>
+         * If not connected and the scan results have the last connected network
+         * available then connect to the network.
+         * see {@link android.provider.Settings.Secure#WIMAX_LAST_CONNECTED_NETWORK}.
+         */
+        public static final String WIMAX_AUTO_CONNECT_ON =
+                "wimax_auto_connect_on";
+
+        /**
+         * The last connected wimax network name.
+         */
+        public static final String WIMAX_LAST_CONNECTED_NETWORK =
+                "wimax_last_connected_network";
+
         /**
          * Whether background data usage is allowed by the user. See
          * ConnectivityManager for more info.
