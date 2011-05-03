@@ -439,13 +439,12 @@ class BatteryService extends Binder {
     }
 
     private final int getIcon(int level) {
-        boolean mThemeCompatibility;
-        mThemeCompatibility = Settings.System.getInt(mContext.getContentResolver(),
+        boolean mThemeCompatibility = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.THEME_COMPATIBILITY_BATTERY, 1) == 1;
 
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
-            if (mThemeCompatibility) { // 100 battery
-                return com.android.internal.R.drawable.stat_sys_battery_charge_100;
+            if (mThemeCompatibility) {
+                return com.android.internal.R.drawable.stat_sys_battery_charge_100;  // 100 battery
             } else {
                 return com.android.internal.R.drawable.stat_sys_battery_charge_stock; // Stock battery
             }
