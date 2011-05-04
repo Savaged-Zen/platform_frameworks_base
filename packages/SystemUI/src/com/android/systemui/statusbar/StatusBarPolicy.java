@@ -685,9 +685,6 @@ public class StatusBarPolicy {
         mService.setIcon("headset", com.android.internal.R.drawable.stat_sys_headset, 0);
         mService.setIconVisibility("headset", false);
 
-        // wimax
-        mWimaxSettingsHelper = new WimaxSettingsHelper(context);
-
         IntentFilter filter = new IntentFilter();
 
         // Register for Intent broadcasts for...
@@ -702,7 +699,6 @@ public class StatusBarPolicy {
         filter.addAction(AudioManager.VIBRATE_SETTING_CHANGED_ACTION);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothHeadset.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION);
         filter.addAction(BluetoothA2dp.ACTION_SINK_STATE_CHANGED);
         filter.addAction(BluetoothPbap.PBAP_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);

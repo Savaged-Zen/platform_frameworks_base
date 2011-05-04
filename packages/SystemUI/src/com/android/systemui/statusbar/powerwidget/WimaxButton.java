@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2011 The CyanogenMod Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2011 The CyanogenMod Project
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package com.android.systemui.statusbar.powerwidget;
 
@@ -31,8 +31,8 @@ public class WimaxButton extends PowerButton {
     private static final StateTracker sWimaxState = new WimaxStateTracker();
 
     /**
-     * Subclass of StateTracker to get/set WiMAX state.
-     */
+* Subclass of StateTracker to get/set WiMAX state.
+*/
     private static final class WimaxStateTracker extends StateTracker {
         @Override
         public int getActualState(Context context) {
@@ -74,9 +74,9 @@ public class WimaxButton extends PowerButton {
         }
 
         /**
-         * Converts WimaxController's state values into our
-         * WiMAX-common state values.
-         */
+* Converts WimaxController's state values into our
+* WiMAX-common state values.
+*/
         private static int wimaxStateToFiveState(int wimaxState) {
             switch (wimaxState) {
                 case WimaxManagerConstants.WIMAX_ENABLED_STATE_DISABLED:
