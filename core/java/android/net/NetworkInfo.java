@@ -113,6 +113,8 @@ public class NetworkInfo implements Parcelable {
      */
     private boolean mIsAvailable;
 
+    private String mInterfaceName;
+
     /**
      * @param type network type
      * @deprecated
@@ -307,6 +309,20 @@ public class NetworkInfo implements Parcelable {
         return mExtraInfo;
     }
 
+    /**
+     * @hide
+     */
+    public void setInterface(String paramString) {
+        this.mInterfaceName = paramString;
+    }
+
+    /**
+     * @hide
+     */
+    public String getInterface() {
+        return this.mInterfaceName;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder("NetworkInfo: ");
@@ -344,6 +360,7 @@ public class NetworkInfo implements Parcelable {
         dest.writeInt(mIsRoaming ? 1 : 0);
         dest.writeString(mReason);
         dest.writeString(mExtraInfo);
+        dest.writeString(mInterfaceName);
     }
 
     /**
@@ -365,6 +382,7 @@ public class NetworkInfo implements Parcelable {
                 netInfo.mIsRoaming = in.readInt() != 0;
                 netInfo.mReason = in.readString();
                 netInfo.mExtraInfo = in.readString();
+                netInfo.mInterfaceName = in.readString();
                 return netInfo;
             }
 
