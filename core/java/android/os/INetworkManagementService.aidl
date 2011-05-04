@@ -6,7 +6,7 @@
 ** you may not use this file except in compliance with the License.
 ** You may obtain a copy of the License at
 **
-**     http://www.apache.org/licenses/LICENSE-2.0
+** http://www.apache.org/licenses/LICENSE-2.0
 **
 ** Unless required by applicable law or agreed to in writing, software
 ** distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,6 @@ interface INetworkManagementService
      * Register an observer to receive events
      */
     void registerObserver(INetworkManagementEventObserver obs);
-
-    void setWiMaxCoExistence(boolean paramBoolean);
 
     /**
      * Unregister an observer from receiving events.
@@ -120,14 +118,14 @@ interface INetworkManagementService
     String[] getDnsForwarders();
 
     /**
-     *  Enables Network Address Translation between two interfaces.
-     *  The address and netmask of the external interface is used for
-     *  the NAT'ed network.
+     * Enables Network Address Translation between two interfaces.
+     * The address and netmask of the external interface is used for
+     * the NAT'ed network.
      */
     void enableNat(String internalInterface, String externalInterface);
 
     /**
-     *  Disables Network Address Translation between two interfaces.
+     * Disables Network Address Translation between two interfaces.
      */
     void disableNat(String internalInterface, String externalInterface);
 
