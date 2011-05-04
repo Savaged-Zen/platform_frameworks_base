@@ -125,7 +125,6 @@ public class WimaxButton extends PowerButton {
         sWimaxState.toggleState(mView.getContext());
     }
 
-    @Override
     protected boolean handleLongClick() {
         Intent intent = new Intent("android.settings.WIMAX_SETTINGS");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
