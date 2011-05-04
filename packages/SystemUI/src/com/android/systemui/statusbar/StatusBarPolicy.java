@@ -584,6 +584,14 @@ public class StatusBarPolicy {
                 // TODO - stop using other means to get wifi/mobile info
                 updateConnectivity(intent);
             }
+            else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED) ||
+                     action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION) ||
+                     action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+                updateWiMAX(intent);
+            }
         }
     };
 
@@ -689,11 +697,12 @@ public class StatusBarPolicy {
         filter.addAction(Intent.ACTION_POWER_CONNECTED);
         filter.addAction(Intent.ACTION_ALARM_CHANGED);
         filter.addAction(Intent.ACTION_SYNC_STATE_CHANGED);
-	filter.addAction(Intent.ACTION_HEADSET_PLUG);
+        filter.addAction(Intent.ACTION_HEADSET_PLUG);
         filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
         filter.addAction(AudioManager.VIBRATE_SETTING_CHANGED_ACTION);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothHeadset.ACTION_STATE_CHANGED);
+        filter.addAction(BluetoothHid.HID_DEVICE_STATE_CHANGED_ACTION);
         filter.addAction(BluetoothA2dp.ACTION_SINK_STATE_CHANGED);
         filter.addAction(BluetoothPbap.PBAP_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -706,7 +715,12 @@ public class StatusBarPolicy {
         filter.addAction(TtyIntent.TTY_ENABLED_CHANGE_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(ConnectivityManager.INET_CONDITION_ACTION);
-        mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
+        filter.addAction(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED);
+        filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WimaxManagerConstants.RSSI_CHANGED_ACTION);
 
         // load config to determine if to distinguish Hspa data icon
         try {
@@ -1424,8 +1438,22 @@ public class StatusBarPolicy {
                     mIsWimaxEnabled = false;
                     break;
             }
+        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION)) {
+            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.CURRENT_WIMAX_ENABLED_STATE,
+                    WimaxManagerConstants.WIMAX_ENABLED_STATE_UNKNOWN);
+            mIsWimaxEnabled = (wimaxStatus == WimaxManagerConstants.WIMAX_ENABLED_STATE_ENABLED);
         } else if (action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION)) {
             mWimaxSignal = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_SIGNAL_LEVEL, 0);
+        } else if (action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+            int rssi = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_RSSI_LEVEL, -200);
+            Slog.d(TAG, "WiMAX RSSI: " + rssi);
+            if (rssi >= 3) {
+                mWimaxSignal = 3;
+            } else if (rssi <= 0) {
+                mWimaxSignal = 0;
+            } else {
+                mWimaxSignal = rssi;
+            }
         } else if (action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
             mWimaxState = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATE,
                     WimaxManagerConstants.WIMAX_STATE_UNKNOWN);
@@ -1445,6 +1473,16 @@ public class StatusBarPolicy {
                         iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
                     }
                     break;
+            }
+            mService.setIcon("wimax", iconId, 0);
+        } else if (action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION)) {
+            final NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WimaxManagerConstants.EXTRA_NETWORK_INFO);
+            if (networkInfo != null && networkInfo.isConnected()) {
+                iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
+            } else if (networkInfo != null && networkInfo.isAvailable()) {
+                iconId = sWimaxIdleImg;
+            } else {
+                iconId = sWimaxDisconnectedImg;
             }
             mService.setIcon("wimax", iconId, 0);
         }
