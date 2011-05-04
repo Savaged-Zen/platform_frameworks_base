@@ -80,6 +80,11 @@ endif
 
 ifeq ($(BOARD_OVERLAY_FORMAT_YCbCr_420_SP),true)
 LOCAL_CFLAGS += -DUSE_OVERLAY_FORMAT_YCbCr_420_SP
+LOCAL_C_INCLUDES += hardware/msm7k/libgralloc-qsd8k
+endif
+
+ifeq ($(BOARD_USE_CAF_LIBCAMERA), true)
+    LOCAL_CFLAGS += -DBOARD_USE_CAF_LIBCAMERA
 endif
 
 include $(BUILD_SHARED_LIBRARY)
