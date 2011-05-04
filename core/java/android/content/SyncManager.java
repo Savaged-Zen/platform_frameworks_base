@@ -264,6 +264,7 @@ public class SyncManager implements OnAccountsUpdateListener {
                     mDataConnectionIsConnected = true;
                     break;
                 case DISCONNECTED:
+                    if (intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
                        mDataConnectionIsConnected = false;
                     } else {
                        mDataConnectionIsConnected = true;
