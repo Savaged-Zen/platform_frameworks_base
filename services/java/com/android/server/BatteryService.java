@@ -444,17 +444,17 @@ class BatteryService extends Binder {
 
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
             if (mThemeCompatibility) {
-                return com.android.internal.R.drawable.stat_sys_battery_charge_100;  // 100 battery
+                return com.android.internal.R.drawable.stat_sys_battery_charge_mod;  // 100-New battery charging icons
             } else {
-                return com.android.internal.R.drawable.stat_sys_battery_charge_stock; // Stock battery
+                return com.android.internal.R.drawable.stat_sys_battery_charge; // Stock Android battery charging icons
             }
         } else if (mBatteryStatus == BatteryManager.BATTERY_STATUS_DISCHARGING ||
-                mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
-                mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
+            mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
+            mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
             if (mThemeCompatibility) {
-                return com.android.internal.R.drawable.stat_sys_battery_100; // 100 battery
+                return com.android.internal.R.drawable.stat_sys_battery_mod; // 100-New battery icons
             } else {
-                return com.android.internal.R.drawable.stat_sys_battery_stock; // Old battery
+                return com.android.internal.R.drawable.stat_sys_battery; // Stock Android battery icons
             }
         } else {
             return com.android.internal.R.drawable.stat_sys_battery_unknown;
