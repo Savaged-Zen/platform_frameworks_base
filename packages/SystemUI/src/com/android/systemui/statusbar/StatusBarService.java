@@ -80,7 +80,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import com.android.systemui.R;
-import com.android.systemui.statusbar.StatusBarPolicy;
+import com.android.systemui.statusbar.policy.StatusBarPolicy;
 
 public class StatusBarService extends Service implements CommandQueue.Callbacks {
     static final String TAG = "StatusBarService";
