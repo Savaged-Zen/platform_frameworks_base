@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar;
+package com.android.systemui.statusbar.policy;
 
 import android.app.StatusBarManager;
 import android.app.AlertDialog;
@@ -404,7 +404,7 @@ public class StatusBarPolicy {
         R.drawable.stat_sys_roaming_cdma_0,
         R.drawable.stat_sys_roaming_cdma_0 //239
 
-        // 128-255 Reserved
+        // 240-255 Reserved
     };
 
     //***** Data connection icons
@@ -569,10 +569,6 @@ public class StatusBarPolicy {
                     action.equals(AudioManager.VIBRATE_SETTING_CHANGED_ACTION)) {
                 updateVolume();
             }
-            else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
-                int state = intent.getIntExtra("state", 0);
-                mService.setIconVisibility("headset", (state == 1));
-            }
             else if (action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED)) {
                 updateSimState(intent);
             }
@@ -586,10 +582,7 @@ public class StatusBarPolicy {
             }
             else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED) ||
                      action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION) ||
-                     action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
+                     action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
                 updateWiMAX(intent);
             }
         }
@@ -681,10 +674,6 @@ public class StatusBarPolicy {
         mService.setIconVisibility("volume", false);
         updateVolume();
 
-        // headset
-        mService.setIcon("headset", com.android.internal.R.drawable.stat_sys_headset, 0);
-        mService.setIconVisibility("headset", false);
-
         IntentFilter filter = new IntentFilter();
 
         // Register for Intent broadcasts for...
@@ -694,7 +683,6 @@ public class StatusBarPolicy {
         filter.addAction(Intent.ACTION_POWER_CONNECTED);
         filter.addAction(Intent.ACTION_ALARM_CHANGED);
         filter.addAction(Intent.ACTION_SYNC_STATE_CHANGED);
-        filter.addAction(Intent.ACTION_HEADSET_PLUG);
         filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
         filter.addAction(AudioManager.VIBRATE_SETTING_CHANGED_ACTION);
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
@@ -714,9 +702,8 @@ public class StatusBarPolicy {
         filter.addAction(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION);
         filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_STATUS_CHANGED);
-        filter.addAction(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION);
-        filter.addAction(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION);
-        filter.addAction(WimaxManagerConstants.RSSI_CHANGED_ACTION);
+
+        mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
 
         // load config to determine if to distinguish Hspa data icon
         try {
@@ -958,15 +945,15 @@ public class StatusBarPolicy {
             updateSignalStrength(); // apply any change in mInetCondition
             break;
         case ConnectivityManager.TYPE_WIMAX:
-             mInetCondition = inetCondition;
-             if (info.isConnected()) {
-                 mIsWimaxConnected = true;
-                 mService.setIconVisibility("wimax", true);
-             } else {
-                 mIsWimaxConnected = false;
-             }
-             updateWiMAX(intent);
-             break;
+            mInetCondition = inetCondition;
+            if (info.isConnected()) {
+                mIsWimaxConnected = true;
+                mService.setIconVisibility("wimax", true);
+            } else {
+                mIsWimaxConnected = false;
+            }
+            updateWiMAX(intent);
+            break;
         }
     }
 
@@ -1097,11 +1084,11 @@ public class StatusBarPolicy {
                 else if (asu >= 4)  iconLevel = 2;
                 else iconLevel = 1;
             } else {  // Four bar
-            if (asu <= 2 || asu == 99) iconLevel = 0;
-            else if (asu >= 12) iconLevel = 4;
-            else if (asu >= 8)  iconLevel = 3;
-            else if (asu >= 5)  iconLevel = 2;
-            else iconLevel = 1;
+                if (asu <= 2 || asu == 99) iconLevel = 0;
+                else if (asu >= 12) iconLevel = 4;
+                else if (asu >= 8)  iconLevel = 3;
+                else if (asu >= 5)  iconLevel = 2;
+                else iconLevel = 1;
             }
             // Though mPhone is a Manager, this call is not an IPC
             if (mPhone.isNetworkRoaming()) {
@@ -1176,18 +1163,18 @@ public class StatusBarPolicy {
             else if (cdmaEcio >= -150) levelEcio = 1;
             else levelEcio = 0;
         } else { // Four bar
-        if (cdmaDbm >= -75) levelDbm = 4;
-        else if (cdmaDbm >= -85) levelDbm = 3;
-        else if (cdmaDbm >= -95) levelDbm = 2;
-        else if (cdmaDbm >= -100) levelDbm = 1;
-        else levelDbm = 0;
+            if (cdmaDbm >= -75) levelDbm = 4;
+            else if (cdmaDbm >= -85) levelDbm = 3;
+            else if (cdmaDbm >= -95) levelDbm = 2;
+            else if (cdmaDbm >= -100) levelDbm = 1;
+            else levelDbm = 0;
 
-        // Ec/Io are in dB*10
-        if (cdmaEcio >= -90) levelEcio = 4;
-        else if (cdmaEcio >= -110) levelEcio = 3;
-        else if (cdmaEcio >= -130) levelEcio = 2;
-        else if (cdmaEcio >= -150) levelEcio = 1;
-        else levelEcio = 0;
+            // Ec/Io are in dB*10
+            if (cdmaEcio >= -90) levelEcio = 4;
+            else if (cdmaEcio >= -110) levelEcio = 3;
+            else if (cdmaEcio >= -130) levelEcio = 2;
+            else if (cdmaEcio >= -150) levelEcio = 1;
+            else levelEcio = 0;
         }
 
         return (levelDbm < levelEcio) ? levelDbm : levelEcio;
@@ -1216,17 +1203,17 @@ public class StatusBarPolicy {
             else if (evdoSnr >= 1) levelEvdoSnr = 1;
             else levelEvdoSnr = 0;
         } else { // Four bar
-        if (evdoDbm >= -65) levelEvdoDbm = 4;
-        else if (evdoDbm >= -75) levelEvdoDbm = 3;
-        else if (evdoDbm >= -90) levelEvdoDbm = 2;
-        else if (evdoDbm >= -105) levelEvdoDbm = 1;
-        else levelEvdoDbm = 0;
+            if (evdoDbm >= -65) levelEvdoDbm = 4;
+            else if (evdoDbm >= -75) levelEvdoDbm = 3;
+            else if (evdoDbm >= -90) levelEvdoDbm = 2;
+            else if (evdoDbm >= -105) levelEvdoDbm = 1;
+            else levelEvdoDbm = 0;
 
-        if (evdoSnr >= 7) levelEvdoSnr = 4;
-        else if (evdoSnr >= 5) levelEvdoSnr = 3;
-        else if (evdoSnr >= 3) levelEvdoSnr = 2;
-        else if (evdoSnr >= 1) levelEvdoSnr = 1;
-        else levelEvdoSnr = 0;
+            if (evdoSnr >= 7) levelEvdoSnr = 4;
+            else if (evdoSnr >= 5) levelEvdoSnr = 3;
+            else if (evdoSnr >= 3) levelEvdoSnr = 2;
+            else if (evdoSnr >= 1) levelEvdoSnr = 1;
+            else levelEvdoSnr = 0;
         }
         return (levelEvdoDbm < levelEvdoSnr) ? levelEvdoDbm : levelEvdoSnr;
     }
@@ -1434,22 +1421,8 @@ public class StatusBarPolicy {
                     mIsWimaxEnabled = false;
                     break;
             }
-        } else if (action.equals(WimaxManagerConstants.WIMAX_ENABLED_CHANGED_ACTION)) {
-            int wimaxStatus = intent.getIntExtra(WimaxManagerConstants.CURRENT_WIMAX_ENABLED_STATE,
-                    WimaxManagerConstants.WIMAX_ENABLED_STATE_UNKNOWN);
-            mIsWimaxEnabled = (wimaxStatus == WimaxManagerConstants.WIMAX_ENABLED_STATE_ENABLED);
         } else if (action.equals(WimaxManagerConstants.SIGNAL_LEVEL_CHANGED_ACTION)) {
             mWimaxSignal = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_SIGNAL_LEVEL, 0);
-        } else if (action.equals(WimaxManagerConstants.RSSI_CHANGED_ACTION)) {
-            int rssi = intent.getIntExtra(WimaxManagerConstants.EXTRA_NEW_RSSI_LEVEL, -200);
-            Slog.d(TAG, "WiMAX RSSI: " + rssi);
-            if (rssi >= 3) {
-                mWimaxSignal = 3;
-            } else if (rssi <= 0) {
-                mWimaxSignal = 0;
-            } else {
-                mWimaxSignal = rssi;
-            }
         } else if (action.equals(WimaxManagerConstants.WIMAX_STATE_CHANGED_ACTION)) {
             mWimaxState = intent.getIntExtra(WimaxManagerConstants.EXTRA_WIMAX_STATE,
                     WimaxManagerConstants.WIMAX_STATE_UNKNOWN);
@@ -1469,16 +1442,6 @@ public class StatusBarPolicy {
                         iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
                     }
                     break;
-            }
-            mService.setIcon("wimax", iconId, 0);
-        } else if (action.equals(WimaxManagerConstants.NETWORK_STATE_CHANGED_ACTION)) {
-            final NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WimaxManagerConstants.EXTRA_NETWORK_INFO);
-            if (networkInfo != null && networkInfo.isConnected()) {
-                iconId = sWimaxSignalImages[mInetCondition][mWimaxSignal];
-            } else if (networkInfo != null && networkInfo.isAvailable()) {
-                iconId = sWimaxIdleImg;
-            } else {
-                iconId = sWimaxDisconnectedImg;
             }
             mService.setIcon("wimax", iconId, 0);
         }
