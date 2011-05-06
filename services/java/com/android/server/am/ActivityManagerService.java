@@ -1679,7 +1679,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 if (cr.binding != null && cr.binding.service != null
                         && cr.binding.service.app != null
                         && cr.binding.service.app.lruSeq != mLruSeq) {
-                    updateLruProcessInternalLocked(cr.binding.service.app, oomAdj,
+                    updateLruProcessInternalLocked(cr.binding.service.app, false,
                             updateActivityTime, i+1);
                 }
             }
@@ -1687,7 +1687,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         if (app.conProviders.size() > 0) {
             for (ContentProviderRecord cpr : app.conProviders.keySet()) {
                 if (cpr.app != null && cpr.app.lruSeq != mLruSeq) {
-                    updateLruProcessInternalLocked(cpr.app, oomAdj,
+                    updateLruProcessInternalLocked(cpr.app, false,
                             updateActivityTime, i+1);
                 }
             }
@@ -2074,6 +2074,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             mMainStack.startActivityUncheckedLocked(pal.r, pal.sourceRecord,
                     pal.grantedUriPermissions, pal.grantedMode, pal.onlyIfNeeded,
                     doResume && i == (N-1));
+            pal.r = null;
+            pal.sourceRecord = null;
+
         }
         mPendingActivityLaunches.clear();
     }
@@ -2573,6 +2576,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     mMainStack.mHistory.remove(i);
 
                     r.inHistory = false;
+                    r.resultTo = null;
                     mWindowManager.removeAppToken(r);
                     if (VALIDATE_TOKENS) {
                         mWindowManager.validateAppTokens(mMainStack.mHistory);
@@ -3683,9 +3687,11 @@ public final class ActivityManagerService extends ActivityManagerNative
                 String[] pkgs = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
                 if (pkgs != null) {
                     for (String pkg : pkgs) {
-                        if (forceStopPackageLocked(pkg, -1, false, false, false)) {
-                            setResultCode(Activity.RESULT_OK);
-                            return;
+                        synchronized (ActivityManagerService.this) {
+                         if (forceStopPackageLocked(pkg, -1, false, false, false)) {
+                             setResultCode(Activity.RESULT_OK);
+                             return;
+                         }
                         }
                     }
                 }
@@ -4387,12 +4393,15 @@ public final class ActivityManagerService extends ActivityManagerNative
         perm.modeFlags |= modeFlags;
         if (owner == null) {
             perm.globalModeFlags |= modeFlags;
-        } else if ((modeFlags&Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
-            perm.readOwners.add(owner);
-            owner.addReadPermission(perm);
-        } else if ((modeFlags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
-            perm.writeOwners.add(owner);
-            owner.addWritePermission(perm);
+        } else {
+            if ((modeFlags&Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+                 perm.readOwners.add(owner);
+                 owner.addReadPermission(perm);
+            }
+            if ((modeFlags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+                 perm.writeOwners.add(owner);
+                 owner.addWritePermission(perm);
+            }
         }
     }
 
@@ -4698,7 +4707,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             if (localLOGV) Slog.v(
                 TAG, "getTasks: max=" + maxNum + ", flags=" + flags
                 + ", receiver=" + receiver);
-
+	    /** This could be bad? Possibly, Might look into better way to do it: Pedlar
             if (checkCallingPermission(android.Manifest.permission.GET_TASKS)
                     != PackageManager.PERMISSION_GRANTED) {
                 if (receiver != null) {
@@ -4715,7 +4724,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                         + " requires " + android.Manifest.permission.GET_TASKS;
                 Slog.w(TAG, msg);
                 throw new SecurityException(msg);
-            }
+            } **/
 
             int pos = mMainStack.mHistory.size()-1;
             ActivityRecord next =
@@ -4827,8 +4836,8 @@ public final class ActivityManagerService extends ActivityManagerNative
     public List<ActivityManager.RecentTaskInfo> getRecentTasks(int maxNum,
             int flags) {
         synchronized (this) {
-            enforceCallingPermission(android.Manifest.permission.GET_TASKS,
-                    "getRecentTasks()");
+            //enforceCallingPermission(android.Manifest.permission.GET_TASKS,
+            //        "getRecentTasks()");
 
             IPackageManager pm = AppGlobals.getPackageManager();
             
@@ -6712,17 +6721,24 @@ public final class ActivityManagerService extends ActivityManagerNative
      * to append various headers to the dropbox log text.
      */
     private void appendDropBoxProcessHeaders(ProcessRecord process, StringBuilder sb) {
+        // Watchdog thread ends up invoking this function (with
+        // a null ProcessRecord) to add the stack file to dropbox.
+        // Do not acquire a lock on this (am) in such cases, as it
+        // could cause a potential deadlock, if and when watchdog
+        // is invoked due to unavailability of lock on am and it
+        // would prevent watchdog from killing system_server.
+        if (process == null) {
+            sb.append("Process: system_server\n");
+            return;
+        }
         // Note: ProcessRecord 'process' is guarded by the service
         // instance.  (notably process.pkgList, which could otherwise change
         // concurrently during execution of this method)
         synchronized (this) {
-            if (process == null || process.pid == MY_PID) {
+            if (process.pid == MY_PID) {
                 sb.append("Process: system_server\n");
             } else {
                 sb.append("Process: ").append(process.processName).append("\n");
-            }
-            if (process == null) {
-                return;
             }
             int flags = process.info.flags;
             IPackageManager pm = AppGlobals.getPackageManager();
@@ -9100,6 +9116,10 @@ public final class ActivityManagerService extends ActivityManagerNative
                 TAG, "Removed service that is not running: " + r);
         }
 
+        if (r.connections.size() > 0) {
+            r.connections.clear();
+        }
+
         if (r.bindings.size() > 0) {
             r.bindings.clear();
         }
@@ -9927,6 +9947,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             ProcessRecord proc = mBackupTarget.app;
+            mBackupTarget.app = null;
             mBackupTarget = null;
             mBackupAppName = null;
 
@@ -11531,7 +11552,15 @@ public final class ActivityManagerService extends ActivityManagerNative
         int adj;
         int schedGroup;
         int N;
-        if (app == TOP_APP) {
+        if ("com.android.mms".equals(app.processName) &&
+            Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.LOCK_MMS_IN_MEMORY, 0) == 1 ) {
+            // MMS can die in situations of heavy memory pressure.
+            // Always push it to the top.
+            adj = FOREGROUND_APP_ADJ;
+            schedGroup = Process.THREAD_GROUP_DEFAULT;
+            app.adjType = "mms";
+        } else if (app == TOP_APP) {
             // The last app on the list is the foreground app.
             adj = FOREGROUND_APP_ADJ;
             schedGroup = Process.THREAD_GROUP_DEFAULT;
@@ -11573,7 +11602,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         } else if (app == mHomeProcess) {
             // This process is hosting what we currently consider to be the
             // home app, so we don't want to let it go into the background.
-            adj = HOME_APP_ADJ;
+            adj =  Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.LOCK_HOME_IN_MEMORY, 0) == 1 ? VISIBLE_APP_ADJ : HOME_APP_ADJ;
             schedGroup = Process.THREAD_GROUP_BG_NONINTERACTIVE;
             app.adjType = "home";
         } else if ((N=app.activities.size()) != 0) {

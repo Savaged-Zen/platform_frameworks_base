@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Patched by Sven Dawitz; Copyright (C) 2011 CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +39,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.policy.PolicyManager;
+import com.android.internal.policy.impl.CmPhoneWindowManager;
 import com.android.internal.policy.impl.PhoneWindowManager;
 import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
@@ -522,9 +524,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 } catch (InterruptedException e) {
                 }
             }
+            return thr.mService;
         }
-
-        return thr.mService;
     }
 
     static class WMThread extends Thread {
@@ -1482,6 +1483,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 WindowState wb = localmWindows.get(foundI-1);
                 if (wb.mBaseLayer < maxLayer &&
                         wb.mAttachedWindow != foundW &&
+                        wb.mAttachedWindow != foundW.mAttachedWindow &&
                         (wb.mAttrs.type != TYPE_APPLICATION_STARTING ||
                                 wb.mToken != foundW.mToken)) {
                     // This window is not related to the previous one in any
@@ -7601,7 +7603,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 WindowState win = allAppWindows.get(i);
                 if (win == startingWindow || win.mAppFreezing
                         || win.mViewVisibility != View.VISIBLE
-                        || win.mAttrs.type == TYPE_APPLICATION_STARTING) {
+                        || win.mAttrs.type == TYPE_APPLICATION_STARTING
+                        || win.mDestroying) {
                     continue;
                 }
                 if (DEBUG_VISIBILITY) {
@@ -8737,7 +8740,7 @@ public class WindowManagerService extends IWindowManager.Stub
                                         + " interesting=" + numInteresting
                                         + " drawn=" + wtoken.numDrawnWindows);
                                 wtoken.allDrawn = true;
-                                changes |= PhoneWindowManager.FINISH_LAYOUT_REDO_ANIM;
+                                changes |= CmPhoneWindowManager.FINISH_LAYOUT_REDO_ANIM;
 
                                 // We can now show all of the drawn windows!
                                 if (!mOpeningApps.contains(wtoken)) {

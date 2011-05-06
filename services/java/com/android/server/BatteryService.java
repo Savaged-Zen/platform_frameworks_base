@@ -31,7 +31,6 @@ import android.os.IBinder;
 import android.os.DropBoxManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.os.SystemProperties;
 import android.os.SystemClock;
 import android.os.UEventObserver;
 import android.provider.Settings;
@@ -439,23 +438,12 @@ class BatteryService extends Binder {
     }
 
     private final int getIcon(int level) {
-        boolean mThemeCompatibility = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.THEME_COMPATIBILITY_BATTERY, 1) == 1;
-
         if (mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
-            if (mThemeCompatibility) {
-                return com.android.internal.R.drawable.stat_sys_battery_charge_mod;  // 100-New battery charging icons
-            } else {
-                return com.android.internal.R.drawable.stat_sys_battery_charge; // Stock Android battery charging icons
-            }
+            return com.android.internal.R.drawable.stat_sys_battery_charge;
         } else if (mBatteryStatus == BatteryManager.BATTERY_STATUS_DISCHARGING ||
-            mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
-            mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
-            if (mThemeCompatibility) {
-                return com.android.internal.R.drawable.stat_sys_battery_mod; // 100-New battery icons
-            } else {
-                return com.android.internal.R.drawable.stat_sys_battery; // Stock Android battery icons
-            }
+                mBatteryStatus == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
+                mBatteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
+            return com.android.internal.R.drawable.stat_sys_battery;
         } else {
             return com.android.internal.R.drawable.stat_sys_battery_unknown;
         }

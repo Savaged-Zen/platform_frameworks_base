@@ -47,6 +47,7 @@ import android.os.SystemProperties;
 import android.provider.Contacts.People;
 import android.provider.Settings;
 import android.server.BluetoothA2dpService;
+import android.server.BluetoothHidService;
 import android.server.BluetoothService;
 import android.server.search.SearchManagerService;
 import android.util.EventLog;
@@ -123,12 +124,14 @@ class ServerThread extends Thread {
         WindowManagerService wm = null;
         BluetoothService bluetooth = null;
         BluetoothA2dpService bluetoothA2dp = null;
+        BluetoothHidService bluetoothHid = null;
         HeadsetObserver headset = null;
         DockObserver dock = null;
         UsbService usb = null;
         UiModeManagerService uiMode = null;
         RecognitionManagerService recognition = null;
         ThrottleService throttle = null;
+        RingerSwitchObserver ringer = null;
 
         // Critical services...
         try {
@@ -218,6 +221,10 @@ class ServerThread extends Thread {
                 bluetoothA2dp = new BluetoothA2dpService(context, bluetooth);
                 ServiceManager.addService(BluetoothA2dpService.BLUETOOTH_A2DP_SERVICE,
                                           bluetoothA2dp);
+                bluetoothHid = new BluetoothHidService(context, bluetooth);
+                ServiceManager.addService(BluetoothHidService.BLUETOOTH_HID_SERVICE,
+                                          bluetoothHid);
+                //Log.e(TAG, "Bluetooth HID Service");
 
                 int bluetoothOn = Settings.Secure.getInt(mContentResolver,
                     Settings.Secure.BLUETOOTH_ON, 0);
@@ -234,6 +241,7 @@ class ServerThread extends Thread {
         StatusBarManagerService statusBar = null;
         InputMethodManagerService imm = null;
         AppWidgetService appWidget = null;
+        ProfileManagerService profile = null;
         NotificationManagerService notification = null;
         WallpaperManagerService wallpaper = null;
         LocationManagerService location = null;
@@ -324,6 +332,14 @@ class ServerThread extends Thread {
             }
 
             try {
+                Slog.i(TAG, "Profile Manager");
+                profile = new ProfileManagerService(context);
+                ServiceManager.addService(Context.PROFILE_SERVICE, profile);
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting Profile Manager", e);
+            }
+
+            try {
                 Slog.i(TAG, "Notification Manager");
                 notification = new NotificationManagerService(context, statusBar, lights);
                 ServiceManager.addService(Context.NOTIFICATION_SERVICE, notification);
@@ -389,6 +405,16 @@ class ServerThread extends Thread {
                 headset = new HeadsetObserver(context);
             } catch (Throwable e) {
                 Slog.e(TAG, "Failure starting HeadsetObserver", e);
+            }
+
+            try {
+                if (SystemProperties.get("ro.config.ringerswitch").equals("1")) {
+                    Slog.i(TAG, "RingerSwitch Observer");
+                    // Listen for hard ringer switch changes
+                    ringer = new RingerSwitchObserver(context);
+                }
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting RingerSwitchObserver", e);
             }
 
             try {
