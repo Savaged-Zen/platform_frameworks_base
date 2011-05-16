@@ -85,7 +85,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         void onClearAll();
         void onNotificationClick(String pkg, String tag, int id);
         void onNotificationClear(String pkg, String tag, int id);
-        void onPanelRevealed();
+	void onPanelRevealed();
         void onNotificationError(String pkg, String tag, int id,
                 int uid, int initialPid, String message);
     }

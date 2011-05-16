@@ -2139,7 +2139,7 @@ public class ActivityStack {
                     // being started, which means not bringing it to the front
                     // if the caller is not itself in the front.
                     ActivityRecord curTop = topRunningNonDelayedActivityLocked(notTop);
-                    if (curTop != null && curTop.task != taskTop.task) {
+                    if (curTop.task != taskTop.task) {
                         r.intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
                         boolean callerAtFront = sourceRecord == null
                                 || curTop.task == sourceRecord.task;
@@ -2940,10 +2940,7 @@ public class ActivityStack {
         // because clients have remote IPC references to this object so we
         // can't assume that will go away and want to avoid circular IPC refs.
         r.results = null;
-        if(r.pendingResults != null) {
-           r.pendingResults.clear();
-           r.pendingResults = null;
-        }
+        r.pendingResults = null;
         r.newIntents = null;
         r.icicle = null;
         
@@ -3078,7 +3075,6 @@ public class ActivityStack {
                     mService.cancelIntentSenderLocked(rec, false);
                 }
             }
-            r.pendingResults.clear();
             r.pendingResults = null;
         }
 
@@ -3102,7 +3098,6 @@ public class ActivityStack {
         if (r.state != ActivityState.DESTROYED) {
             mHistory.remove(r);
             r.inHistory = false;
-            r.resultTo = null;
             r.state = ActivityState.DESTROYED;
             mService.mWindowManager.removeAppToken(r);
             if (VALIDATE_TOKENS) {
@@ -3124,7 +3119,6 @@ public class ActivityStack {
                 ConnectionRecord c = it.next();
                 mService.removeConnectionLocked(c, null, r);
             }
-            r.connections.clear();
             r.connections = null;
         }
     }
@@ -3245,7 +3239,6 @@ public class ActivityStack {
             if (r.app == app) {
                 if (localLOGV) Slog.v(TAG, "Removing this entry!");
                 list.remove(i);
-                r.resultTo = null;
             }
         }
     }
