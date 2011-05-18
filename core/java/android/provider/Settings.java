@@ -2185,15 +2185,9 @@ public final class Settings {
         public static final String WIFI_WATCHDOG_PING_TIMEOUT_MS =
             Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS;
 	
-	/** Contracnts for SZParts  **/		
-        public static final String SCREEN_SETTINGS = "NUM_SCREENS";		
-
-        public static final String LAUNCHER_2_PACKAGE = "com.android.launcher";    
-
+	/** Constants for SZParts  **/		
 	public static final String USE_TRANSPARENT_STATUSBAR = "use_transparent_statusbar";
-
         public static final String USE_SCREENON_ANIM = "use_screenon_anim";
-
 	public static final String USE_SCREENOFF_ANIM = "use_screenoff_anim";
 
      }
