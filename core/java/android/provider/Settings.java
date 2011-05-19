@@ -1745,7 +1745,20 @@ public final class Settings {
          * URI for the "device unlocked" (keyguard dismissed) sound.
          * @hide
          */
+
         public static final String UNLOCK_SOUND = "unlock_sound";
+        /**
+         * Whether to wake the screen with the trackball. The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String TRACKBALL_WAKE_SCREEN = "trackball_wake_screen";
+
+        /**
+         * Whether to unlock the screen with the trackball.  The value is boolean (1 or 0).
+         * @hide
+         */
+
+        public static final String TRACKBALL_UNLOCK_SCREEN = "trackball_unlock_screen";
 
         /**
          * Whether to enable quiet hours.
