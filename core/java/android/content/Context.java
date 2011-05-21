@@ -1206,7 +1206,7 @@ public abstract class Context {
      *  <dd> A {@link android.net.wifi.WifiManager WifiManager} for management of
      * Wi-Fi connectivity.
      * <dt> {@link #INPUT_METHOD_SERVICE} ("input_method")
-     * <dd> An {@wlink android.view.inputmethod.InputMethodManager InputMethodManager}
+     * <dd> An {@link android.view.inputmethod.InputMethodManager InputMethodManager}
      * for management of input methods.
      * <dt> {@link #UI_MODE_SERVICE} ("uimode")
      * <dd> An {@link android.app.UiModeManager} for controlling UI modes.
