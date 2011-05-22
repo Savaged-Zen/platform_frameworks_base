@@ -38,15 +38,25 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="20dip"
+        android:layout_marginBottom="5dip"
         >
 
         <Button android:id="@+id/mount_button" 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
             android:paddingLeft="18dip"
             android:paddingRight="18dip"
             android:text="@string/usb_storage_button_mount"
+            />
+        <Button android:id="@+id/multi_mount_button" 
+            android:layout_below="@id/mount_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:paddingLeft="18dip"
+            android:paddingRight="18dip"
+            android:text="@string/usb_storage_button_multi_mount"
             />
         <Button android:id="@+id/unmount_button"
             android:visibility="gone"

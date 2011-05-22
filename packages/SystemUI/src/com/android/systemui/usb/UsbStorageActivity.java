@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2007 Google Inc.
+ * Copyright (C) 2011 Savaged-Zen
+ *      Author: Mike Wielgosz <mwielgosz@savaged-zen.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +52,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.util.List;
 
 /**
@@ -62,6 +68,7 @@ public class UsbStorageActivity extends Activity
     private static final String TAG = "UsbStorageActivity";
 
     private Button mMountButton;
+    private Button mMultiMountButton;
     private Button mUnmountButton;
     private ProgressBar mProgressBar;
     private TextView mBanner;
@@ -78,6 +85,9 @@ public class UsbStorageActivity extends Activity
 
     // thread for working with the storage services, which can be slow
     private Handler mAsyncStorageHandler;
+
+    // Multi-mount or default
+    private boolean mMultiMount = false;
 
     /** Used to detect when the USB cable is unplugged, so we can call finish() */
     private BroadcastReceiver mUsbStateReceiver = new BroadcastReceiver() {
@@ -132,6 +142,8 @@ public class UsbStorageActivity extends Activity
 
         mMountButton = (Button) findViewById(com.android.internal.R.id.mount_button);
         mMountButton.setOnClickListener(this);
+        mMultiMountButton = (Button) findViewById(com.android.internal.R.id.multi_mount_button);
+        mMultiMountButton.setOnClickListener(this);
         mUnmountButton = (Button) findViewById(com.android.internal.R.id.unmount_button);
         mUnmountButton.setOnClickListener(this);
         mProgressBar = (ProgressBar) findViewById(com.android.internal.R.id.progress);
@@ -157,13 +169,19 @@ public class UsbStorageActivity extends Activity
             mProgressBar.setVisibility(View.GONE);
             mUnmountButton.setVisibility(View.VISIBLE);
             mMountButton.setVisibility(View.GONE);
+            mMultiMountButton.setVisibility(View.GONE);
             mIcon.setImageResource(com.android.internal.R.drawable.usb_android_connected);
-            mBanner.setText(com.android.internal.R.string.usb_storage_stop_title);
             mMessage.setText(com.android.internal.R.string.usb_storage_stop_message);
+            if (mMultiMount) {
+                mBanner.setText(com.android.internal.R.string.usb_storage_stop_multi_mount_title);
+            } else {
+                mBanner.setText(com.android.internal.R.string.usb_storage_stop_title);
+            }
         } else {
             mProgressBar.setVisibility(View.GONE);
             mUnmountButton.setVisibility(View.GONE);
             mMountButton.setVisibility(View.VISIBLE);
+            mMultiMountButton.setVisibility(View.VISIBLE);
             mIcon.setImageResource(com.android.internal.R.drawable.usb_android);
             mBanner.setText(com.android.internal.R.string.usb_storage_title);
             mMessage.setText(com.android.internal.R.string.usb_storage_message);
@@ -186,6 +204,9 @@ public class UsbStorageActivity extends Activity
         } catch (Exception ex) {
             Log.e(TAG, "Failed to read UMS enable state", ex);
         }
+
+        mMultiMount = checkMultiMount();
+        if (mMultiMount) switchDisplay(true);
     }
 
     @Override
@@ -258,6 +279,7 @@ public class UsbStorageActivity extends Activity
             public void run() {
                 mUnmountButton.setVisibility(View.GONE);
                 mMountButton.setVisibility(View.GONE);
+                mMultiMountButton.setVisibility(View.GONE);
 
                 mProgressBar.setVisibility(View.VISIBLE);
                 // will be hidden once USB mass storage kicks in (or fails)
@@ -323,14 +345,63 @@ public class UsbStorageActivity extends Activity
         if (v == mMountButton) {
            // Check for list of storage users and display dialog if needed.
             checkStorageUsers();
+        } else if (v == mMultiMountButton) {
+            // Mounts the SD card to PC and keeps mounted to phone
+            toggleMultiMount(true);
+            switchDisplay(true);
         } else if (v == mUnmountButton) {
+            // Unmount whatever is currently mounted
             if (localLOGV) Log.i(TAG, "Disabling UMS");
-            switchUsbMassStorage(false);
+            if (checkMultiMount()) {
+                toggleMultiMount(false);
+                switchDisplay(false);
+            } else {
+                switchUsbMassStorage(false);
+            }
         }
     }
 
     public void onCancel(DialogInterface dialog) {
         finish();
+    }
+
+    private void toggleMultiMount(boolean on) {
+
+        try {
+            Process p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+
+            if (on) {
+                mMultiMount = true;
+                os.writeBytes("echo \"/dev/block/mmcblk0\" > /sys/devices/platform/usb_mass_storage/lun0/file");
+            } else {
+                mMultiMount = false;
+                os.writeBytes("echo > /sys/devices/platform/usb_mass_storage/lun0/file");
+            }
+            os.flush();
+            os.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private boolean checkMultiMount() {
+        String file = "/sys/devices/platform/usb_mass_storage/lun0/file";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File(file)));
+            String line = br.readLine();
+            br.close();
+
+            if (line.equals("")) {
+                return false;
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
+
     }
 
 }
