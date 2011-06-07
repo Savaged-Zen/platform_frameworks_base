@@ -1417,8 +1417,6 @@ status_t CameraService::dump(int fd, const Vector<String16>& args) {
     return NO_ERROR;
 }
 
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-
 #ifndef FIRST_CAMERA_FACING
 #define FIRST_CAMERA_FACING CAMERA_FACING_BACK
 #endif
@@ -1489,7 +1487,6 @@ extern "C" sp<CameraHardwareInterface> HAL_openCameraHardware(int cameraId)
             }
             return hardware;
         }
-#endif
     }
     return openCameraHardware(cameraId);
 }
