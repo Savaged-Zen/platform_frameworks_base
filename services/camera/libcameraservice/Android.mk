@@ -92,4 +92,3 @@ ifeq ($(BOARD_FIRST_CAMERA_FRONT_FACING),true)
 endif
 
 include $(BUILD_SHARED_LIBRARY)
-
