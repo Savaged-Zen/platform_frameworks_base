@@ -60,6 +60,7 @@ static void setLogLevel(int level) {
 
 // ----------------------------------------------------------------------------
 
+#ifdef BOARD_USE_FROYO_LIBCAMERA
 struct camera_size_type {
     int width;
     int height;
@@ -69,6 +70,7 @@ static const camera_size_type preview_sizes[] = {
     { 1280, 720 }, // 720P
     { 768, 432 },
 };
+#endif
 
 static int getCallingPid() {
     return IPCThreadState::self()->getCallingPid();
@@ -546,7 +548,11 @@ status_t CameraService::Client::setPreviewDisplay(const sp<ISurface>& surface) {
     mOverlayRef = 0;
     // If preview has been already started, set overlay or register preview
     // buffers now.
+#ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
     if (mHardware->previewEnabled() || mUseOverlay) {
+#else
+    if (mHardware->previewEnabled()) {
+#endif
         if (mUseOverlay) {
 #ifdef USE_OVERLAY_FORMAT_YCbCr_420_SP
             if (mSurface != NULL) {
@@ -568,12 +574,14 @@ status_t CameraService::Client::registerPreviewBuffers() {
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
 
+#ifdef BOARD_USE_FROYO_LIBCAMERA
     //for 720p recording , preview can be 800X448
     if(w ==  preview_sizes[0].width && h== preview_sizes[0].height){
         LOGD("registerpreviewbufs :changing dimensions to 768X432 for 720p recording.");
         w = preview_sizes[1].width;
         h = preview_sizes[1].height;
     }
+#endif
 
     // FIXME: don't use a hardcoded format here.
     ISurface::BufferHeap buffers(w, h, w, h,
@@ -594,12 +602,14 @@ status_t CameraService::Client::setOverlay() {
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
 
+#ifdef BOARD_USE_FROYO_LIBCAMERA
     //for 720p recording , preview can be 800X448
     if(w == preview_sizes[0].width && h==preview_sizes[0].height){
         LOGD("Changing overlay dimensions to 768X432 for 720p recording.");
         w = preview_sizes[1].width;
         h = preview_sizes[1].height;
     }
+#endif
 
     if (w != mOverlayW || h != mOverlayH || mOrientationChanged) {
         // Force the destruction of any previous overlay
@@ -1028,7 +1038,11 @@ void CameraService::Client::notifyCallback(int32_t msgType, int32_t ext1,
     switch (msgType) {
         case CAMERA_MSG_SHUTTER:
             // ext1 is the dimension of the yuv picture.
+#ifdef BOARD_USE_CAF_LIBCAMERA
+            client->handleShutter((image_rect_type *)ext1, (bool)ext2);
+#else
             client->handleShutter((image_rect_type *)ext1);
+#endif
             break;
         default:
             client->handleGenericNotify(msgType, ext1, ext2);
@@ -1089,8 +1103,25 @@ void CameraService::Client::dataCallbackTimestamp(nsecs_t timestamp,
 // snapshot taken callback
 // "size" is the width and height of yuv picture for registerBuffer.
 // If it is NULL, use the picture size from parameters.
-void CameraService::Client::handleShutter(image_rect_type *size) {
+void CameraService::Client::handleShutter(image_rect_type *size
+#ifdef BOARD_USE_CAF_LIBCAMERA
+    , bool playShutterSoundOnly
+#endif
+) {
+
+#ifdef BOARD_USE_CAF_LIBCAMERA
+    if(playShutterSoundOnly) {
+#endif
     mCameraService->playSound(SOUND_SHUTTER);
+#ifdef BOARD_USE_CAF_LIBCAMERA
+    sp<ICameraClient> c = mCameraClient;
+    if (c != 0) {
+        mLock.unlock();
+        c->notifyCallback(CAMERA_MSG_SHUTTER, 0, 0);
+    }
+    return;
+    }
+#endif
 
     // Screen goes black after the buffer is unregistered.
     if (mSurface != 0 && !mUseOverlay) {
@@ -1387,10 +1418,18 @@ status_t CameraService::dump(int fd, const Vector<String16>& args) {
 }
 
 #ifdef BOARD_USE_FROYO_LIBCAMERA
+
+#ifndef FIRST_CAMERA_FACING
+#define FIRST_CAMERA_FACING CAMERA_FACING_BACK
+#endif
+#ifndef FIRST_CAMERA_ORIENTATION
+#define FIRST_CAMERA_ORIENTATION 90
+#endif
+
 static const CameraInfo sCameraInfo[] = {
     {
-        CAMERA_FACING_BACK,
-        90,  /* orientation */
+        FIRST_CAMERA_FACING,
+        FIRST_CAMERA_ORIENTATION,  /* orientation */
     },
     {
         CAMERA_FACING_FRONT,
