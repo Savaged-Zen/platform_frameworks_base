@@ -1457,8 +1457,6 @@ static void htcCameraSwitch(int cameraId)
     close(fd);
 }
 
-#endif
-
 extern "C" int HAL_getNumberOfCameras()
 {
     return getNumberOfCameras();
@@ -1487,6 +1485,7 @@ extern "C" sp<CameraHardwareInterface> HAL_openCameraHardware(int cameraId)
             }
             return hardware;
         }
+#endif
     }
     return openCameraHardware(cameraId);
 }
